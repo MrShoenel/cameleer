@@ -1,6 +1,6 @@
 {
   "name": "cameleer",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Cameleer is a tool that facilitates rich orchestration and task definitions to get jobs done.",
   "main": "index.js",
   "scripts": {
@@ -23,5 +23,13 @@
   "bugs": {
     "url": "https://github.com/MrShoenel/cameleer/issues"
   },
-  "homepage": "https://github.com/MrShoenel/cameleer#readme"
+  "homepage": "https://github.com/MrShoenel/cameleer#readme",
+  "dependencies": {
+    "joi": "^13.1.2",
+    "sh.orchestration-tools": "^1.7.2"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.1.0"
+  }
 }
