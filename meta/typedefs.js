@@ -1,6 +1,25 @@
-const { Interval, Progress, Schedule } = require('sh.orchestration-tools')
-, { ErrorArg, LastFunctionArg } = require('./LastFunctionArg');
-
+/**
+ * Type-hinting does not work in VS Code with JSDoc anymore, if we import these types using
+ * require(). That's why we declare them as Functions (because they are constructors).
+ * 
+ * @typedef Task
+ * @type {Function}
+ * 
+ * @typedef Interval
+ * @type {Function}
+ * 
+ * @typedef Progress
+ * @type {Function}
+ * 
+ * @typedef Schedule
+ * @type {Function}
+ * 
+ * @typedef ErrorArg
+ * @type {Function}
+ * 
+ * @typedef LastFunctionArg
+ * @type {Function}
+ */
 
 
 /**
@@ -54,4 +73,39 @@ const { Interval, Progress, Schedule } = require('sh.orchestration-tools')
  * @property {Progress|(() => (Progress|Promise.<Progress>))} [progress] Optional. A Progress-object that will be observed for progress, while this task is running. This property is evaluated every time the task is scheduled to run.
  * @property {Schedule|(() => (Schedule|Promise.<Schedule>))} schedule The schedule this job uses to schedule when it should be triggered. This schedule will internally be added to an appropriate scheduler. Note that this property is only evaluated once during task creation (i.e. the schedule of a task cannot be changed later).
  * @property {SimpleTaskConfig|(() => (SimpleTaskConfig|Promise.<SimpleTaskConfig>))} tasks An array of functions, promise-producing functions or functional-tasks to run as the main task of this definition. The tasks are run in the order they appear in the array, one after another. Execution is therefore serial, not parallel or asynchronous (however, each task may be an async function/Promise-producing function). The value returned by one task is passed as last argument to the next task (i.e. there is always one argument passed). The first task is passed 'undefined' as last argument, as there was no previous task. The final value is discarded. This property is evaluated every time the task is scheduled to run.
+ */
+
+
+/**
+ * @typedef CameleerDefaults
+ * @type {Object}
+ * @property {FunctionalTaskErrorConfig} tasks
+ */
+
+
+/**
+ * @typedef CameleerQueue
+ * @type {Object}
+ * @property {String} name
+ * @property {Boolean} enabled
+ * @property {'cost'|'parallel'} type
+ * @property {Number} [parallelism]
+ * @property {Number} [capabilities]
+ * @property {Boolean} [allowExclusiveJobs]
+ */
+
+/**
+ * @typedef CameleerLogging
+ * @type {Object}
+ * @property {Number} level
+ * @property {String} [method]
+ * @property {String} [endpoint]
+ */
+
+/**
+ * @typedef CameleerConfig
+ * @type {Object}
+ * @property {CameleerDefaults} defaults
+ * @property {Array.<CameleerQueue>} queues
+ * @property {CameleerLogging} logging
  */
