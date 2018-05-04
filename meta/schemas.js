@@ -27,36 +27,33 @@ const FunctionalTaskConfigSchema = Joi.object().keys({
 });
 
 
-const SimpleTaskConfigSchema = Joi.array().items(
-  Joi.func().required(),
+const SimpleTaskConfigSchema = Joi.alternatives(
+  Joi.func(),
   FunctionalTaskConfigSchema
 );
 
 
 const TaskConfigSchema = Joi.object().keys({
   type: Joi.alternatives(
-    Joi.string().min(1).required(),
-    Joi.func().class().required()
+    Joi.string().min(1),
+    Joi.func().class()
   ).required(),
   name: Joi.string().alphanum().min(1).max(255).required(),
-  enabled: Joi.bool().optional(),
+  enabled: Joi.bool().required(), // We require a resolved property!
   skip: Joi.func().arity(0).optional(),
   cost: Joi.alternatives(
-    Joi.number().greater(0).required(),
-    Joi.func().arity(0).required()
+    Joi.number().greater(0),
+    Joi.func().arity(0)
   ).optional(),
   queues: Joi.array().items(
-    Joi.string().alphanum().min(1).required(),
-    Joi.func().required()
+    Joi.string().alphanum().min(1),
+    Joi.func()
   ).not().empty().optional(),
   progress: Joi.alternatives(
-    Joi.object().required(),
-    Joi.func().required()
+    Joi.object(),
+    Joi.func()
   ).optional(),
-  schedule: Joi.alternatives(
-    Joi.object().required(),
-    Joi.func().required()
-  ).required(),
+  schedule: Joi.object().required(), // We require a resolved property!
   tasks: Joi.array().items(
     Joi.func(),
     SimpleTaskConfigSchema
