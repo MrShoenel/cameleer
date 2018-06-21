@@ -2,7 +2,7 @@ require('../meta/typedefs');
 
 const { assert, expect } = require('chai')
 , { assertThrowsAsync } = require('sh.orchestration-tools')
-, { Task } = require('../lib/Task')
+, { Task } = require('../lib/cameleer/Task')
 , { createExampleTaskConfig } = require('./helpers')
 , { TaskConfigSchema } = require('../meta/schemas')
 , Joi = require('joi');
@@ -35,6 +35,11 @@ describe('Task', () => {
 
     conf.myConfProp = 1.5;
     new X(conf);
+
+    assert.throws(() => {
+      conf.myConfProp = 2.1;
+      new X(conf);
+    });
 
     done();
   });

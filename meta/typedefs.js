@@ -68,9 +68,10 @@
  * @property {string} name The name of this task; make sure to choose a rather unique name for each task.
  * @property {boolean|(() => (boolean|Promise.<boolean>)} [enabled] Optional. Defaults to 'true'. Whether this configuration is enabled or not. Note that this property is only evaluated once during task creation (i.e. a task cannot be disabled later).
  * @property {() => (boolean|Promise.<boolean>} [skip] Optional. Defaults to '() => false'. A function that returns a boolean (or a Promise that resolves to a boolean) value to indicate whether or not this task should be skipped at the time of evaluation. It is evaluated before any other tasks are run. If a non-boolean value is returned or the Promise is rejected, the backup will be aborted. This property is evaluated every time the task is scheduled to run.
- * @property {number|(() => (number|Promise.<number>)} [cost] Optional. If this task is allowed to run on cost-based queues, it needs to define a cost according to the queue's capabilities. This property is evaluated every time the task is scheduled to run.
+ * @property {number|(() => (number|Promise.<number>)} [cost] Optional. Defaults to 'null'. If this task is allowed to run on cost-based queues, it needs to define a cost according to the queue's capabilities. This property is evaluated every time the task is scheduled to run.
+ * @property {boolean|(() => (boolean|Promise.<boolean>)} [allowMultiple] Optional. Defaults to 'false'. If true, multiple instances of this task may run in parallel, if scheduled. If false, scheduling attempts will be ignored while the task is running. This property is evaluated every time the task is scheduled to run.
  * @property {Array.<string>|(() => (Array.<string>|Promise.<Array.<string>>)} [queues] Optional. An array of names of queues, this task is allowed to run on. This property is evaluated every time the task is scheduled to run.
- * @property {Progress|(() => (Progress|Promise.<Progress>))} [progress] Optional. A Progress-object that will be observed for progress, while this task is running. This property is evaluated every time the task is scheduled to run.
+ * @property {Progress|(() => (Progress|Promise.<Progress>))} [progress] Optional. Defaults to 'null'. A Progress-object that will be observed for progress, while this task is running. This property is evaluated every time the task is scheduled to run.
  * @property {Schedule|(() => (Schedule|Promise.<Schedule>))} schedule The schedule this job uses to schedule when it should be triggered. This schedule will internally be added to an appropriate scheduler. Note that this property is only evaluated once during task creation (i.e. the schedule of a task cannot be changed later).
  * @property {SimpleTaskConfig|(() => (SimpleTaskConfig|Promise.<SimpleTaskConfig>))} tasks An array of functions, promise-producing functions or functional-tasks to run as the main task of this definition. The tasks are run in the order they appear in the array, one after another. Execution is therefore serial, not parallel or asynchronous (however, each task may be an async function/Promise-producing function). The value returned by one task is passed as last argument to the next task (i.e. there is always one argument passed). The first task is passed 'undefined' as last argument, as there was no previous task. The final value is discarded. This property is evaluated every time the task is scheduled to run.
  */
@@ -84,7 +85,7 @@
 
 
 /**
- * @typedef CameleerQueue
+ * @typedef CameleerQueueConfig
  * @type {Object}
  * @property {String} name
  * @property {Boolean} enabled
@@ -95,7 +96,7 @@
  */
 
 /**
- * @typedef CameleerLogging
+ * @typedef CameleerLoggingConfig
  * @type {Object}
  * @property {Number} level
  * @property {String} [method]
@@ -106,6 +107,6 @@
  * @typedef CameleerConfig
  * @type {Object}
  * @property {CameleerDefaults} defaults
- * @property {Array.<CameleerQueue>} queues
- * @property {CameleerLogging} logging
+ * @property {Array.<CameleerQueueConfig>} queues
+ * @property {CameleerLoggingConfig} logging
  */

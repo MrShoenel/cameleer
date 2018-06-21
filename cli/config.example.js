@@ -32,7 +32,7 @@ const cameleerConfig = {
     }
   },
 
-  /** @type {Array.<CameleerQueue>} */
+  /** @type {Array.<CameleerQueueConfig>} */
   queues: [{
     name: 'defaultQueue',
     enabled: true,
@@ -41,7 +41,7 @@ const cameleerConfig = {
     allowExclusiveJobs: true
   }],
 
-  /** @type {CameleerLogging} */
+  /** @type {CameleerLoggingConfig} */
   logging: {
     method: 'http',
     level: LogLevel.None

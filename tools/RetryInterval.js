@@ -33,7 +33,7 @@ class RetryInterval extends Interval {
    * small (e.g. intervall of 5 minutes where an attempt only takes a few seconds).
    */
   constructor(milliSecondsBetween, numTries = 3, tryRightAway = true, attempter = null) {
-    super(milliSecondsBetween, attempter instanceof Function ? attempter : () => {}, numTries, false, tryRightAway, true);
+    super(milliSecondsBetween, attempter instanceof Function ? attempter : () => {}, numTries, true, tryRightAway, true);
   };
 };
 
