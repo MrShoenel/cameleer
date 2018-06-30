@@ -8,26 +8,29 @@ const { assert, expect } = require('chai')
 , Joi = require('joi');
 
 
+
+class X extends Task {
+  /**
+   * @param {TaskConfig} config
+   */
+  constructor(config) {
+    super(config);
+  };
+  
+  get schemaConf() {
+    return Joi.concat(Joi.object().keys({
+      myConfProp: Joi.number().greater(1).less(2).required().strict()
+    })).concat(TaskConfigSchema);
+  };
+};
+
+
+class Y extends Task {};
+
+
 describe('Task', () => {
   it('should allow instantiation of subclasses that have their own extended config', done => {
-    class X extends Task {
-      /**
-       * @param {TaskConfig} config
-       */
-      constructor(config) {
-        super(config);
-      };
-      
-      get schemaConf() {
-        return Joi.concat(Joi.object().keys({
-          myConfProp: Joi.number().greater(1).less(2).required().strict()
-        })).concat(TaskConfigSchema);
-      };
-    };
-
     const conf = createExampleTaskConfig('X');
-
-    new Task(conf);
 
     assert.throws(() => {
       new X(conf); // X requires 'myConfProp' (not yet added)
@@ -45,18 +48,17 @@ describe('Task', () => {
   });
 
   it('should be able to create the right subclass from configuration', done => {
-    class X extends Task {};
 
-    const conf = createExampleTaskConfig('X');
+    const conf = createExampleTaskConfig('Y');
 
     assert.throws(() => {
-      const x = Task.fromConfiguration(conf);
+      const y = Task.fromConfiguration(conf);
     });
 
-    Task.registerSubclass(X);
-    const x = Task.fromConfiguration(conf);
+    Task.registerSubclass(Y);
+    const y = Task.fromConfiguration(conf);
 
-    assert.isTrue(x instanceof X);
+    assert.isTrue(y instanceof Y);
 
     done();
   });
