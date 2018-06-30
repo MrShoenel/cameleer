@@ -1,3 +1,6 @@
+/**
+ * @author Sebastian Hönel <development@hoenel.net>
+ */
 class Resolve {
   /**
    * Check whether or not a value is of a specific type, that can be given
@@ -21,11 +24,6 @@ class Resolve {
           return true;
         }
       } catch (e) { }
-      
-      if (tName(value) === tName(exampleOrTypeOrClassName)) {
-        // If the value is of the same evaluated type as the example (which is not a string)
-        return true;
-      }
     }
 
 
@@ -43,8 +41,21 @@ class Resolve {
         } else if (ctor === exampleOrTypeOrClassName) {
           return true;
         }
+      } else {
+        const exProto = Object.getPrototypeOf(exampleOrTypeOrClassName)
+        , exCtor = exProto.hasOwnProperty('constructor') ? exProto.constructor : null;
+
+        if (proto === exProto || ctor === exCtor) {
+          return true;
+        }
       }
     } catch (e) { }
+
+
+    if (Resolve.isPrimitive(value) && Resolve.isPrimitive(exampleOrTypeOrClassName)
+      && value === exampleOrTypeOrClassName) {
+      return true;
+    }
 
 
     return false;
@@ -72,6 +83,41 @@ class Resolve {
    */
   static isPromise(value) {
     return Resolve.isTypeOf(value, Promise);
+  };
+
+  /**
+   * @param {Symbol} value 
+   * @returns {boolean}
+   */
+  static isSymbol(value) {
+    return typeof value === 'symbol';
+  };
+
+  /**
+   * @see {https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures}
+   * @param {any} value 
+   * @returns {boolean} true, iff the value is primitive
+   */
+  static isPrimitive(value) {
+    return value === true || value === false || value === void 0 || value === null
+      || typeof value === 'string' || Resolve.isNumber(value) || Resolve.isSymbol(value);
+  };
+
+  /**
+   * Similar to @see {toValue}, this method returns the default value for the given
+   * value, should it be undefined. Other than that, this method returns the same as
+   * @see {toValue}.
+   * 
+   * @see {toValue}
+   * @template T
+   * @returns {T} the resolved-to value or its default, should it be undefined.
+   */
+  static async optionalToValue(defaultValue, value, exampleOrTypeOrClassName, resolveFuncs = true, resolvePromises = true) {
+    if (value === void 0) {
+      return defaultValue;
+    }
+
+    return await Resolve.toValue(value, exampleOrTypeOrClassName, resolveFuncs, resolvePromises);
   };
 
   /**

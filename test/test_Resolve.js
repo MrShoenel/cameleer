@@ -15,8 +15,10 @@ const testObj = {
   e: '',
   f: () => {},
   g: function() {},
-  p: new Promise((res, rej) => res(() => {})),
-  t: async() => new TestClass()
+  p: new Promise((res, rej) => res(() => 42)),
+  t: async() => new TestClass(),
+  v: () => Math.random() >= .5,
+  u: () => 42
 };
 
 
@@ -31,6 +33,18 @@ describe('Resolve', () => {
     done();
   });
 
+  it('should resolve functions and towards functions correctly', async() => {
+    const boolVal = await Resolve.toValue(testObj.v, Boolean);
+    assert.isTrue(boolVal === true || boolVal === false);
+
+    const fVal = await Resolve.toValue(testObj.u, Function);
+    assert.isTrue(Resolve.isFunction(fVal));
+    assert.strictEqual(fVal(), 42);
+
+    const _42 = await Resolve.toValue(testObj.u, Number);
+    assert.strictEqual(_42, 42);
+  });
+
   it('should resolve literal values correctly', async() => {
     assert.strictEqual(
       await Resolve.toValue(testObj.a, 42), 0);
@@ -42,6 +56,10 @@ describe('Resolve', () => {
       await Resolve.toValue(testObj.d, void 0), void 0);
     assert.strictEqual(
       await Resolve.toValue(testObj.e, 'hello'), '');
+
+    const arr = await Resolve.toValue(() => [1,2], Array);
+    assert.isTrue(Object.prototype.toString.call(arr) === '[object Array]');
+    assert.strictEqual(arr.length, 2);
   });
 
   it('should resolve functions correctly', async() => {
@@ -50,10 +68,12 @@ describe('Resolve', () => {
     assert.strictEqual(
       await Resolve.toValue(testObj.g, void 0), void 0);
     assert.strictEqual(
-      await Resolve.toValue(testObj.p, void 0), void 0);
+      await Resolve.toValue(testObj.p, Number), 42);
+
     // Notice how we exec the result of the resolving this time:
+    // .. and also how we resolve to a function instead of a 42:
     assert.strictEqual(
-      (await Resolve.toValue(testObj.p, () => {}))(), void 0);
+      (await Resolve.toValue(testObj.p, Function))(), 42);
   });
 
   it('should resolve promises/async function correctly', async() => {
