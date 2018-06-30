@@ -8,6 +8,8 @@ const { Interval } = require('sh.orchestration-tools');
  * in between retries. After that, the Interval is finished and will not issue any
  * more events. If used with an Interval-capable scheduler, the interval's observable
  * will drain after it ran out of attempts.
+ * 
+ * @author Sebastian Hönel <development@hoenel.net>
  */
 class RetryInterval extends Interval {
   /**

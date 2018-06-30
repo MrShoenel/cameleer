@@ -1,10 +1,10 @@
 require('../meta/typedefs');
 
-const Task = require('../lib/Task')
+const Task = require('../lib/cameleer/Task')
 , { LogLevel } = require('sh.log-client')
 , shot = require('sh.orchestration-tools')
 , { RetryInterval } = require('../tools/RetryInterval')
-, { ConfigProvider } = require('../lib/ConfigProvider');
+, { ConfigProvider } = require('../lib/cameleer/ConfigProvider');
 
 /*
  * This is an example configuration for cameleer. You should create your own
@@ -69,7 +69,7 @@ class MyConfigProvider extends ConfigProvider {
   /**
    * @returns {CameleerConfig}
    */
-  async getCameleerConfig() {
+  getCameleerConfig() {
     return cameleerConfig;
   };
 

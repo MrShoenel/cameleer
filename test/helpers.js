@@ -1,10 +1,14 @@
 require('../meta/typedefs');
 
 const { ProgressNumeric, Interval, timeout
-} = require('sh.orchestration-tools');
+} = require('sh.orchestration-tools')
+, Schemas = require('../meta/schemas')
+, Joi = require('joi')
+, Felicity = require('felicity');
 
 
 /**
+ * @author Sebastian Hönel <development@hoenel.net>
  * @returns {TaskConfig} an example config that validates
  */
 const createExampleTaskConfig = (className = 'Task', name = 'foo') => {
