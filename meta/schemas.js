@@ -1,5 +1,10 @@
 const Joi = require('joi');
 
+/**
+ * The following schemas are implementations of the type-definitions.
+ * 
+ * @author Sebastian Hönel <development@hoenel.net>
+ */
 
 const FunctionalTaskErrorConfigSchema = Joi.object().keys({
   schedule: Joi.func().required(),
@@ -29,7 +34,7 @@ const FunctionalTaskConfigSchema = Joi.object().keys({
 
 
 const SimpleTaskConfigSchema = Joi.alternatives(
-  Joi.func(),
+  Joi.func().required(),
   FunctionalTaskConfigSchema
 );
 
@@ -38,7 +43,7 @@ const TaskConfigSchema = Joi.object().keys({
   type: Joi.alternatives(
     Joi.string().min(1),
     Joi.func().class()
-  ).required(),
+  ).default('Task', 'The class Task is the base-class').optional(),
   name: Joi.string().alphanum().min(1).max(255).required(),
   enabled: Joi.alternatives(
     Joi.bool(),
@@ -54,10 +59,12 @@ const TaskConfigSchema = Joi.object().keys({
     Joi.boolean(),
     Joi.func()
   ).default(false).optional(),
-  queues: Joi.array().items(
-    Joi.string().alphanum().min(1),
-    Joi.func()
-  ).not().empty().optional(),
+  queues: Joi.alternatives(
+    Joi.array().items(
+      Joi.string().alphanum().min(1)
+    ).required().not().empty(),
+    Joi.func().arity(0).required()
+  ).optional(),
   progress: Joi.alternatives(
     Joi.object(),
     Joi.func()
@@ -66,13 +73,44 @@ const TaskConfigSchema = Joi.object().keys({
   tasks: Joi.array().items(
     Joi.func(),
     SimpleTaskConfigSchema
-  ).not().empty().required()
+  ).required().not().empty()
 }).strict().unknown(true);
+
+
+const CameleerDefaultsSchema = Joi.object().keys({
+  tasks: FunctionalTaskErrorConfigSchema
+}).strict();
+
+const CameleerQueueConfigSchema = Joi.object().keys({
+  name: Joi.string().alphanum().min(1).required(),
+  enabled: Joi.boolean().required(),
+  type: Joi.alternatives('cost', 'parallel'),
+  parallelism: Joi.number().integer().greater(0).optional(),
+  capabilities: Joi.number().greater(0).optional(),
+  allowExclusiveJobs: Joi.boolean().optional()
+});
+
+const CameleerLoggingConfigSchema = Joi.object().keys({
+  level: Joi.number().integer().required(),
+  method: Joi.string().min(1).optional(),
+  endpoint: Joi.string().min(1).optional()
+});
+
+const CameleerConfigSchema = Joi.object().keys({
+  defaults: CameleerDefaultsSchema,
+  logging: CameleerLoggingConfigSchema,
+  queues: Joi.array().items(CameleerQueueConfigSchema).required().not().empty()
+});
 
 
 module.exports = Object.freeze({
   FunctionalTaskErrorConfigSchema,
   FunctionalTaskConfigSchema,
   SimpleTaskConfigSchema,
-  TaskConfigSchema
+  TaskConfigSchema,
+
+  CameleerDefaultsSchema,
+  CameleerQueueConfigSchema,
+  CameleerLoggingConfigSchema,
+  CameleerConfigSchema
 });
