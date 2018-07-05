@@ -29,7 +29,7 @@
     "felicity": "^2.4.9",
     "joi": "^13.4.0",
     "rxjs": "^6.2.1",
-    "sh.log-client": "^1.0.3",
+    "sh.log-client": "^1.1.0",
     "sh.orchestration-tools": "^2.5.3",
     "wakeonlan": "^0.1.0"
   },
