@@ -43,8 +43,8 @@ const cameleerConfig = {
 
   /** @type {CameleerLoggingConfig} */
   logging: {
-    method: 'http',
-    level: LogLevel.None
+    method: 'console',
+    level: LogLevel.Trace
   }
 };
 
