@@ -5,7 +5,8 @@
  * then can safely determine whether there was an error or not, regard-
  * less of its kind.
  * 
- * template T the error may be of any kind.
+ * @template T the error may be of any kind.
+ * @author Sebastian Hönel <development@hoenel.net>
  */
 class ErrorArg {
   constructor(error) {
@@ -16,6 +17,7 @@ class ErrorArg {
 
 /**
  * @template T
+ * @author Sebastian Hönel <development@hoenel.net>
  */
 class LastFunctionArg {
   /**

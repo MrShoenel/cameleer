@@ -8,18 +8,18 @@ const { Interval } = require('sh.orchestration-tools');
  * in between retries. After that, the Interval is finished and will not issue any
  * more events. If used with an Interval-capable scheduler, the interval's observable
  * will drain after it ran out of attempts.
+ * 
+ * @author Sebastian Hönel <development@hoenel.net>
  */
 class RetryInterval extends Interval {
   /**
    * @template T
+   * @param {number} milliSecondsBetween amount of time between attempts.
    * @param {number} numTries How often to trigger the event
-   * @param {number} milliSecondsBetween amount of time between
-   * attempts.
-   * @param {boolean} tryRightAway After having created this
-   * Interval, go ahead and schedule it right away (if this is
-   * false, the amount of time defined 'milliSecondsBetween'
-   * has to elapse once).
-   * @param {null|(() => (T|Promise.<T>))} attempter Optional. Defaults to null.
+   * @param {boolean} [tryRightAway] Optional. Defaults to true. After having
+   * created this Interval, go ahead and schedule it right away (if this is
+   * false, the amount of time defined 'milliSecondsBetween' has to elapse once).
+   * @param {null|(() => (T|Promise.<T>))} [attempter] Optional. Defaults to null.
    * The attempter is a function that can defer the rescheduling of the interval.
    * When the interval elapses, the attempter will be executed. Only after it
    * finished, the interval will be rescheduled (if there are attempts left). If
@@ -34,7 +34,12 @@ class RetryInterval extends Interval {
    * time it takes to complete the attempt and the time between attempts is very
    * small (e.g. intervall of 5 minutes where an attempt only takes a few seconds).
    */
-  constructor(numTries = 3, milliSecondsBetween, tryRightAway = true, attempter = null) {
-    super(milliSecondsBetween, attempter instanceof Function ? attempter : () => {}, numTries, false, tryRightAway, true);
+  constructor(milliSecondsBetween, numTries = 3, tryRightAway = true, attempter = null) {
+    super(milliSecondsBetween, attempter instanceof Function ? attempter : () => {}, numTries, true, tryRightAway, true);
   };
 };
+
+
+module.exports = Object.freeze({
+  RetryInterval
+});
