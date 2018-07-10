@@ -103,11 +103,19 @@
  * @property {Boolean} [allowExclusiveJobs]
  */
 
+
 /**
- * @typedef CameleerLoggingConfig
+ * @typedef CameleerLoggingMethod
+ * @type {'console'}
+ */
+
+/**
+ * @typedef CameleerLoggingConfig the configuration for the logging consists mostly
+ * of optional properties, as this is specific to the selected method. For logging,
+ * the package sh.log-client will be used.
  * @type {Object}
  * @property {Number} level
- * @property {String} [method]
+ * @property {CameleerLoggingMethod} method Currently, only 'console' is supported
  * @property {String} [endpoint]
  */
 
