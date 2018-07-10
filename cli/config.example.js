@@ -28,7 +28,8 @@ const cameleerConfig = {
     tasks: {
       continueOnFinalFail: false,
       schedule: () => new RetryInterval(60e3, 3, false),
-      skip: false
+      skip: false,
+      maxNumFails: Number.MAX_SAFE_INTEGER
     }
   },
 
