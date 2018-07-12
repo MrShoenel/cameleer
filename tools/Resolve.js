@@ -131,14 +131,14 @@ class Resolve {
    * or Promise that may produce a value of the expected type or exemplary value.
    * @param {any|string|T} exampleOrTypeOrClassName an examplary other value you'd
    * expect, a type (e.g. RegExp) or class or the name of a class or c'tor-function.
-   * @param {boolean} resolveFuncs if true, then functions will be called and their
-   * return value will be checked against the expected type or exemplary value. Note that
-   * this parameter applies recursively, until a function's returned value no longer is a
-   * function.
-   * @param {boolean} resolvePromises if true, then Promises will be awaited and their
-   * resolved value will be checked against the expected type or exemplary value. Note that
-   * this parameter applies recursively, until a Promise's resolved value no longer is a
-   * Promise.
+   * @param {boolean} [resolveFuncs] Optional. Defaults to true. If true, then functions
+   * will be called and their return value will be checked against the expected type or
+   * exemplary value. Note that this parameter applies recursively, until a function's
+   * returned value no longer is a function.
+   * @param {boolean} [resolvePromises] Optional. Defaults to true. If true, then Promises
+   * will be awaited and their resolved value will be checked against the expected type or
+   * exemplary value. Note that this parameter applies recursively, until a Promise's
+   * resolved value no longer is a Promise.
    * @throws {Error} if the value cannot be resolved to the expected type or exemplary
    * value.
    * @returns {T} the resolved-to value
