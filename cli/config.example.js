@@ -12,11 +12,6 @@ const Task = require('../lib/cameleer/Task')
  * example file is will give you an idea of what you can import from cameleer
  * (it will import everything) and is always kept up to date, with each new
  * feature of cameleer.
- * You will need to export a function from this file that, once called, returns
- * an object of type 'CameleerConfig' (see the typedefs in meta). This object
- * holds all configuration for cameleer, its defaults and all tasks. The function
- * may be async and you may instruct cameleer during runtime to reload this file
- * so that you can change the configuration.
  */
 
 
@@ -45,28 +40,43 @@ const cameleerConfig = {
   /** @type {CameleerLoggingConfig} */
   logging: {
     method: 'console',
-    level: LogLevel.Trace
+    level: LogLevel.Debug
   }
 };
 
+
+/**
+ * @typedef TT
+ * @type {Task|TaskConfig}
+ */
 
 /**
  * The tasks can be an object where each Task has a name/ID and either
  * is defined literally or may be obtained by calling an (async) function.
  * In this example configuration, this is where you put the tasks.
  * 
- * @type {Object.<string, Task|TaskConfig|(() => (Task|TaskConfig|Promise.<Task|TaskConfig>))>}
+ * @type {Object.<string, TT|(() => (TT|Promise.<TT>))>}
  */
-const tasks = {};
+const exampleTasks = {};
 
 
 
 /**
  * Cameleer uses an instance of ConfigProvider to obtain the application's
  * configuration and tasks. You will have to subclass that class and override
- * all of its methods.
+ * all of its methods. You may also use this default implementation and provide
+ * your own object with tasks.
  */
 class MyConfigProvider extends ConfigProvider {
+  /**
+   * @param {Object.<string, TT|(() => (TT|Promise.<TT>))>} tasks
+   * provide the tasks to this ConfigProvider; if none given, will use the exampleTasks.
+   */
+  constructor(tasks = void 0) {
+    super();
+    this.tasks = tasks === void 0 ? exampleTasks : tasks;
+  };
+
   /**
    * @returns {CameleerConfig}
    */
@@ -79,11 +89,11 @@ class MyConfigProvider extends ConfigProvider {
    * @returns {Task|TaskConfig}
    */
   async getTaskConfig(name) {
-    if (!tasks.hasOwnProperty(name)) {
+    if (!this.tasks.hasOwnProperty(name)) {
       throw new Error(`The task with the name '${name}' cannot be found.`);
     }
 
-    let rawTask = tasks[name];
+    let rawTask = this.tasks[name];
     if (rawTask instanceof Function) {
       rawTask = rawTask();
     }
@@ -99,10 +109,18 @@ class MyConfigProvider extends ConfigProvider {
    */
   async getAllTaskConfigs() {
     return Promise.all(
-      Object.keys(tasks).map(name => this.getTaskConfig(name))
+      Object.keys(this.tasks).map(name => this.getTaskConfig(name))
     );
   };
 };
 
+/* You may copy and derive this file and point a Cameleer-instance (using -c) to it.
+ * The CLI will use Resolve.toValue(..) to obtain an instance of ConfigProvider from
+ * that file then. That function will recursively resolve functions and Promises until
+ * the value is an instance of ConfigProvider. TL;DR: You may export an instance of
+ * your custom ConfigProvider or an (async) function that will return it eventually.
+ */
 
+
+// Will use the exampleTasks for the export in this file.
 module.exports = new MyConfigProvider();
