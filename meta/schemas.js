@@ -20,6 +20,7 @@ const FunctionalTaskErrorConfigSchema = Joi.object().keys({
 
 
 const FunctionalTaskConfigSchema = Joi.object().keys({
+  name: Joi.string().min(1).optional(),
   canFail: Joi.alternatives(
     Joi.boolean().required(),
     FunctionalTaskErrorConfigSchema

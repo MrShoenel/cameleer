@@ -52,6 +52,7 @@
 /**
  * @typedef FunctionalTaskConfig
  * @type {Object}
+ * @property {string} [name] Optional. Defaults to undefined. You may specify an additional name to better distinguish functional tasks in the log. If not provided, only the functional task's index is logged.
  * @property {boolean|FunctionalTaskErrorConfig} [canFail] Optional. Defaults to Cameleer's configuration for FunctionalTaskErrorConfig. Whether or not this task may fail. You may either specify a boolean value or give a more detailed definition using a FunctionalTaskErrorConfig for the case when this task fails.
  * @property {(...args: Array.<Value|CameleerJob>) => (Value|Promise.<Value>)} func The (async) function to execute within this functional task.
  * @property {Object} [thisArg] Optional. Defaults to 'null'. The this-argument to bind the function to (not applicable to arrow-functions).
