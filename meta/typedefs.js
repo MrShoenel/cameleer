@@ -107,7 +107,7 @@
 
 /**
  * @typedef CameleerLoggingMethod
- * @type {'console'}
+ * @type {'console'|'none'}
  */
 
 /**
@@ -116,7 +116,7 @@
  * the package sh.log-client will be used.
  * @type {Object}
  * @property {Number} level
- * @property {CameleerLoggingMethod} method Currently, only 'console' is supported
+ * @property {CameleerLoggingMethod} method Currently, only 'console' and 'none are supported
  * @property {String} [endpoint]
  */
 
