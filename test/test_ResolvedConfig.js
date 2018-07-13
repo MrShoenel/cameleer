@@ -1,8 +1,7 @@
 require('../meta/typedefs');
 
 const { assert, expect } = require('chai')
-, { assertThrowsAsync, timeout, ProgressNumeric, Interval } = require('sh.orchestration-tools')
-, { Resolve } = require('../tools/Resolve')
+, { assertThrowsAsync, timeout, ProgressNumeric, Interval, Resolve } = require('sh.orchestration-tools')
 , { ResolvedConfig } = require('../lib/cameleer/ResolvedConfig')
 , { createExampleInstance } = require('./helpers')
 , Schemas = require('../meta/schemas');
