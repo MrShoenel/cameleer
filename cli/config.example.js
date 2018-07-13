@@ -16,7 +16,7 @@ const Task = require('../lib/cameleer/Task')
 
 
 /** @type {CameleerConfig} */
-const cameleerConfig = {
+const exampleCameleerConfig = {
   /** @type {CameleerDefaults} */
   defaults: {
     /** @type {FunctionalTaskErrorConfig} */
@@ -69,11 +69,14 @@ const exampleTasks = {};
  */
 class MyConfigProvider extends ConfigProvider {
   /**
+   * @param {CameleerConfig} cameleerConfig provide the config for the Cameleer instance;
+   * if undefined, will use a default configuration.
    * @param {Object.<string, TT|(() => (TT|Promise.<TT>))>} tasks
    * provide the tasks to this ConfigProvider; if none given, will use the exampleTasks.
    */
-  constructor(tasks = void 0) {
+  constructor(cameleerConfig = void 0, tasks = void 0) {
     super();
+    this.cameleerConfig = cameleerConfig === void 0 ? exampleCameleerConfig : cameleerConfig;
     this.tasks = tasks === void 0 ? exampleTasks : tasks;
   };
 
@@ -81,7 +84,7 @@ class MyConfigProvider extends ConfigProvider {
    * @returns {CameleerConfig}
    */
   getCameleerConfig() {
-    return cameleerConfig;
+    return this.cameleerConfig;
   };
 
   /**
@@ -122,5 +125,5 @@ class MyConfigProvider extends ConfigProvider {
  */
 
 
-// Will use the exampleTasks for the export in this file.
+// Will use the exampleCameleerConfig and exampleTasks for the export in this file.
 module.exports = new MyConfigProvider();
