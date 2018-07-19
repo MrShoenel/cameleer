@@ -1,8 +1,8 @@
 require('../meta/typedefs');
 
 const Task = require('../lib/cameleer/Task')
+, { Resolve } = require('sh.orchestration-tools')
 , { LogLevel } = require('sh.log-client')
-, shot = require('sh.orchestration-tools')
 , { RetryInterval } = require('../tools/RetryInterval')
 , { ConfigProvider } = require('../lib/cameleer/ConfigProvider');
 
@@ -97,14 +97,8 @@ class MyConfigProvider extends ConfigProvider {
     }
 
     let rawTask = this.tasks[name];
-    if (rawTask instanceof Function) {
-      rawTask = rawTask();
-    }
-    if (rawTask instanceof Promise) {
-      rawTask = await rawTask;
-    }
 
-    return rawTask;
+    return await Resolve.toValue(rawTask, {});
   };
 
   /**
