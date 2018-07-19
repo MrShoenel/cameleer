@@ -52,7 +52,8 @@
 /**
  * @typedef FunctionalTaskConfig
  * @type {Object}
- * @property {boolean|FunctionalTaskErrorConfig} [canFail] Optional. Defaults to Cameleer's configuration for FunctionalTaskErrorConfig. Whether or not this task may fail. You may either specify a boolean value or give a more detailed definition using a FunctionalTaskErrorConfig for the case when this task fails.
+ * @property {string} [name] Optional. Defaults to undefined. You may specify an additional name to better distinguish functional tasks in the log. If not provided, only the functional task's index is logged.
+ * @property {boolean|FunctionalTaskErrorConfig} [canFail] Optional. Defaults to Cameleer's configuration for FunctionalTaskErrorConfig. Whether or not this task may fail. You may either specify a boolean value or give a more detailed definition using a FunctionalTaskErrorConfig for the case when this task fails. If given 'true', then this task may fail up to Cameleer's default-value for 'maxNumFails'. If given 'false', the functional task will given 0 retries and will not be attempted to run on its error-config. Also, such a failing functional task will abort the entire Task.
  * @property {(...args: Array.<Value|CameleerJob>) => (Value|Promise.<Value>)} func The (async) function to execute within this functional task.
  * @property {Object} [thisArg] Optional. Defaults to 'null'. The this-argument to bind the function to (not applicable to arrow-functions).
  * @property {Array.<Value>|(() => (Array.<Value>|Promise.<Array.<Value>>))} [args] Optional. Defaults to an empty array ('[]'). Arguments passed to the functional task, obtained literally, from a Function, or a Promise-producing function. Note that the last argument is always the result of the preceding task. If there was no preceding task, the last argument defaults to 'undefined'. The last argument is passed as an instance of CameleerJob. The CameleerJob provides access to all previous results, the task's logger and a shared object (a context).
@@ -106,7 +107,7 @@
 
 /**
  * @typedef CameleerLoggingMethod
- * @type {'console'}
+ * @type {'console'|'none'}
  */
 
 /**
@@ -115,7 +116,7 @@
  * the package sh.log-client will be used.
  * @type {Object}
  * @property {Number} level
- * @property {CameleerLoggingMethod} method Currently, only 'console' is supported
+ * @property {CameleerLoggingMethod} method Currently, only 'console' and 'none are supported
  * @property {String} [endpoint]
  */
 

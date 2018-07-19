@@ -15,11 +15,13 @@ const FunctionalTaskErrorConfigSchema = Joi.object().keys({
   continueOnFinalFail: Joi.alternatives(
     Joi.boolean().required(),
     Joi.func().arity(0).required()
-  ).default(false).optional()
+  ).default(false).optional(),
+  maxNumFails: Joi.number().integer().min(0).max(Number.MAX_SAFE_INTEGER).default(Number.MAX_SAFE_INTEGER).optional()
 }).strict();
 
 
 const FunctionalTaskConfigSchema = Joi.object().keys({
+  name: Joi.string().min(1).optional(),
   canFail: Joi.alternatives(
     Joi.boolean().required(),
     FunctionalTaskErrorConfigSchema
@@ -50,7 +52,7 @@ const TaskConfigSchema = Joi.object().keys({
     Joi.func().arity(0)
   ).default(true).optional(), // We require a resolved property!
   skip: Joi.func().arity(0)
-    .default(() => false).optional(),
+    .default(false).optional(),
   cost: Joi.alternatives(
     Joi.number().greater(0),
     Joi.func().arity(0)
