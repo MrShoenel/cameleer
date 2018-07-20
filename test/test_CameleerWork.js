@@ -206,7 +206,43 @@ describe('CameleerWork', function() {
   });
 
   it('should not run tasks that are to be skipped or not allowed mutliple', async() => {
-    // Also, this should skip a Task if no Queues are available
+
+  });
+
+  it('should not run tasks if no queues are available', async() => {
+    const testTaskCopy = getExampleTask();
+    /** @type {CameleerConfig} */
+    const cameleerConfCopy = mergeObjects({}, exampleCameleerConf);
+    cameleerConfCopy.queues = [];
+    const config = new MyConfigProvider(cameleerConfCopy, {
+      test: async() => testTaskCopy
+    });
+
+    testTaskCopy.tasks = [{
+      func: () => 42
+    }];
+
+    const c1 = new Cameleer(config);
+    await c1.loadTasks();
+
+    let scheduleObserved = false;
+    let numWorkObserved = 0;
+    c1.getObservableForWork(testTaskCopy.name).subscribe(camWorkEvt => {
+      if (camWorkEvt.type === symbolCameleerSchedule) {
+        scheduleObserved = true;
+        return; // that will happen, but the task should not execute
+      }
+      numWorkObserved++; // This should never happen as there are no queues
+    });
+    
+    const runObs = c1.runAsync();
+    testTaskCopy.schedule.trigger();
+    await timeout(100);
+    await c1.shutdown();
+    await runObs;
+
+    assert.isTrue(scheduleObserved);
+    assert.strictEqual(numWorkObserved, 0);
   });
 
   it('should not crash Cameleer if a Job is entirely erroneous', async function() {
