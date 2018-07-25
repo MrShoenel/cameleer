@@ -131,6 +131,8 @@
  * @property {CameleerDefaults} defaults
  * @property {Array.<CameleerQueueConfig>} queues
  * @property {CameleerLoggingConfig} logging
+ * @property {Array.<Control>} [controls]
+ * @property {Array.<Manager>} [managers]
  */
 
 /**
