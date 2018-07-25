@@ -132,3 +132,21 @@
  * @property {Array.<CameleerQueueConfig>} queues
  * @property {CameleerLoggingConfig} logging
  */
+
+/**
+ * The configuration for sub-types of ConfigurableClass. The only required property is 'type'. All other properties are optional and the corresponding schema allows for unknown keys, so that other/derived types can define their own required or optional properties.
+ * 
+ * @typedef ConfigurableClassConfig
+ * @type {Object}
+ * @property {string|Function} type The name of a class or its Constructor-Function to use for this configuration. If String, it must be a registered type subclassing ConfigurableClass (you will have to register the sub-class manually using SubClassRegister). If function, it will be assumend to be a constructor and called using a new-expression with this configuration object as second argument (the first argument is an instance of Cameleer). The resulting instance will be checked for wheter it is an instance (or subclass) of ConfigurableClass. If not, an error will be thrown.
+ */
+
+/**
+ * @typedef ManagerConfig
+ * @type {ConfigurableClassConfig}
+ */
+
+/**
+ * @typedef ControlConfig
+ * @type {ConfigurableClassConfig}
+ */
