@@ -7,6 +7,7 @@ const { assert, expect } = require('chai')
 , { createExampleTaskConfig } = require('./helpers')
 , { TaskConfigSchema, SimpleTaskConfigSchema } = require('../meta/schemas')
 , { getExampleTask } = require('./test_CameleerWork')
+, { SubClassRegister } = require('../tools/SubClassRegister')
 , exampleConfInstance = require('../cli/config.example')
 , exampleCameleerConf = exampleConfInstance.cameleerConfig
 , util = require('util')
@@ -36,22 +37,22 @@ class Y extends Task {};
 
 describe('Task', () => {
   it('should provide an immutable Map with registered sub-classes', done => {
-    const org1 = Task.registeredSubclasses;
-    const org2 = Task.registeredSubclasses;
+    const org1 = SubClassRegister.getRegisteredSubclasses(Task);
+    const org2 = SubClassRegister.getRegisteredSubclasses(Task);
 
     assert.notEqual(org1, org2);
 
-    Task.registerSubclass(Y);
-    const org3 = Task.registeredSubclasses;
+    SubClassRegister.registerSubclass(Task, Y);
+    const org3 = SubClassRegister.getRegisteredSubclasses(Task);
     assert.notEqual(org2, org3);
 
-    Task.registeredSubclasses.delete('Y');
+    SubClassRegister.getRegisteredSubclasses(Task).delete('Y');
 
-    const org4 = Task.registeredSubclasses;
+    const org4 = SubClassRegister.getRegisteredSubclasses(Task);
     assert.isTrue(org4.has('Y'));
     
-    const Y_Class = Task.unregisterSubclass(Y.name);
-    assert.isTrue(!Task.registeredSubclasses.has('Y'));
+    const Y_Class = SubClassRegister.unregisterSubclass(Task, Y.name);
+    assert.isTrue(!SubClassRegister.getRegisteredSubclasses(Task).has('Y'));
     assert.strictEqual(Y_Class, Y);
 
     done();
@@ -72,17 +73,17 @@ describe('Task', () => {
     });
 
     assert.throws(() => {
-      Task.registerSubclass(Date);
+      SubClassRegister.registerSubclass(Task, Date);
     });
 
     assert.throws(() => {
-      Task.unregisterSubclass(Date);
+      SubClassRegister.unregisterSubclass(Task, Date);
     });
     assert.throws(() => {
-      Task.unregisterSubclass(new Date);
+      SubClassRegister.unregisterSubclass(Task, new Date);
     });
     assert.throws(() => {
-      Task.unregisterSubclass(Y);
+      SubClassRegister.unregisterSubclass(Task, Y);
     });
 
     done();
@@ -150,7 +151,7 @@ describe('Task', () => {
       const y = Task.fromConfiguration(conf, exampleCameleerConf.defaults);
     });
 
-    Task.registerSubclass(Y);
+    SubClassRegister.registerSubclass(Task, Y);
     const y = Task.fromConfiguration(conf, exampleCameleerConf.defaults);
 
     assert.isTrue(y instanceof Y);

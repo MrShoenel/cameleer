@@ -93,7 +93,8 @@ describe('CameleerWork', function() {
 
       // The following should NOT throw:
       c.clearTasks();
-      return await c.loadTasks();
+      await c.loadTasks();
+      return await c.shutdown();
     })();
   });
 
@@ -122,11 +123,22 @@ describe('CameleerWork', function() {
     assert.isFalse(cJob.results[0].isError);
     assert.isTrue(cJob.context.value === 41);
 
+    assert.strictEqual(cJob.functionalTasksDone.length, 1);
+    assert.strictEqual(cJob.functionalTasksDone[0].name, '0');
+    assert.approximately(cJob.functionalTasksProgress, .5, 1e-12);
+
     await timeout(75);
     assert.strictEqual(cJob.results.length, 2);
     assert.strictEqual(cJob.results[1].value, 42);
     assert.isFalse(cJob.results[1].isError);
     assert.isTrue(cJob.context.value === 42);
+
+    assert.strictEqual(cJob.functionalTasksDone.length, 2);
+    assert.strictEqual(cJob.functionalTasksDone[0].name, '0');
+    assert.strictEqual(cJob.functionalTasksDone[1].name, '1 (fTask-two)');
+    assert.strictEqual(cJob.functionalTasksProgress, 1);
+
+    return await c.shutdown();
   });
 
   it('should handle multiple mixed functional tasks within a Task', async() => {
@@ -206,7 +218,45 @@ describe('CameleerWork', function() {
   });
 
   it('should not run tasks that are to be skipped or not allowed mutliple', async() => {
-    // Also, this should skip a Task if no Queues are available
+
+  });
+
+  it('should not run tasks if no queues are available', async() => {
+    const testTaskCopy = getExampleTask();
+    /** @type {CameleerConfig} */
+    const cameleerConfCopy = mergeObjects({}, exampleCameleerConf);
+    cameleerConfCopy.queues = [];
+    const config = new MyConfigProvider(cameleerConfCopy, {
+      test: async() => testTaskCopy
+    });
+
+    testTaskCopy.tasks = [{
+      func: () => 42
+    }];
+
+    const c1 = new Cameleer(config);
+    await c1.loadTasks();
+
+    let scheduleObserved = false;
+    let numWorkObserved = 0;
+    c1.getObservableForWork(testTaskCopy.name).subscribe(camWorkEvt => {
+      if (camWorkEvt.type === symbolCameleerSchedule) {
+        scheduleObserved = true;
+        return; // that will happen, but the task should not execute
+      }
+      numWorkObserved++; // This should never happen as there are no queues
+    });
+    
+    const runObs = c1.runAsync();
+    testTaskCopy.schedule.trigger();
+    await timeout(100);
+    await c1.shutdown();
+    await runObs;
+
+    assert.isTrue(scheduleObserved);
+    assert.strictEqual(numWorkObserved, 0);
+
+    return await c1.shutdown();
   });
 
   it('should not crash Cameleer if a Job is entirely erroneous', async function() {

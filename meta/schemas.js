@@ -79,6 +79,22 @@ const TaskConfigSchema = Joi.object().keys({
 }).strict().unknown(true);
 
 
+
+const ConfigurableClassConfigSchema = Joi.object().keys({
+  type: Joi.alternatives(
+    Joi.string().min(1),
+    Joi.func().class()
+  ).required()
+}).unknown(true);
+
+
+
+const ManagerConfigSchema = ConfigurableClassConfigSchema.unknown(true);
+
+const ControlConfigSchema = ConfigurableClassConfigSchema.unknown(true);
+
+
+
 const CameleerDefaultsSchema = Joi.object().keys({
   tasks: FunctionalTaskErrorConfigSchema
 }).strict();
@@ -95,13 +111,16 @@ const CameleerQueueConfigSchema = Joi.object().keys({
 const CameleerLoggingConfigSchema = Joi.object().keys({
   level: Joi.number().integer().required(),
   method: Joi.string().min(1).optional(),
-  endpoint: Joi.string().min(1).optional()
+  endpoint: Joi.string().min(1).optional(),
+  numInMemory: Joi.number().integer().min(0).default(1000).optional()
 });
 
 const CameleerConfigSchema = Joi.object().keys({
   defaults: CameleerDefaultsSchema,
   logging: CameleerLoggingConfigSchema,
-  queues: Joi.array().items(CameleerQueueConfigSchema).required().not().empty()
+  queues: Joi.array().items(CameleerQueueConfigSchema).required().not().empty(),
+  controls: Joi.array().items(ControlConfigSchema).optional(),
+  managers: Joi.array().items(ManagerConfigSchema).optional()
 });
 
 
@@ -114,5 +133,9 @@ module.exports = Object.freeze({
   CameleerDefaultsSchema,
   CameleerQueueConfigSchema,
   CameleerLoggingConfigSchema,
-  CameleerConfigSchema
+  CameleerConfigSchema,
+
+  ConfigurableClassConfigSchema,
+  ControlConfigSchema,
+  ManagerConfigSchema
 });
