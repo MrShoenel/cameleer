@@ -116,7 +116,12 @@
  * the package sh.log-client will be used.
  * @type {Object}
  * @property {Number} level
- * @property {CameleerLoggingMethod} method Currently, only 'console' and 'none are supported
+ * @property {CameleerLoggingMethod} method Currently, only 'console' and 'none'
+ * are supported
+ * @property {Number} [numInMemory] Optional. Defaults to 1000. Regardless of the
+ * configured logging, Cameleer logs all messages to memory. Set this to 0 to disable
+ * in-memory logging. If disabled, Cameleer will only keep the very last message in
+ * memory.
  * @property {String} [endpoint]
  */
 
