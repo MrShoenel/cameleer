@@ -40,8 +40,17 @@ const exampleCameleerConfig = {
   /** @type {CameleerLoggingConfig} */
   logging: {
     method: 'console',
-    level: LogLevel.Debug
-  }
+    level: LogLevel.Debug,
+    numInMemory: 500
+  },
+
+  /** @type {Array.<ControlConfig>} */
+  controls: [],
+
+  /** @type {Array.<ManagerConfig>} */
+  managers: [{
+    type: 'Manager'
+  }]
 };
 
 
