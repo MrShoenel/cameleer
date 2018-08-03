@@ -75,7 +75,7 @@ const TaskConfigSchema = Joi.object().keys({
   tasks: Joi.array().items(
     Joi.func(),
     SimpleTaskConfigSchema
-  ).required().not().empty()
+  ).default([]).optional()
 }).strict().unknown(true);
 
 
