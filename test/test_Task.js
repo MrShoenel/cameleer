@@ -112,13 +112,6 @@ describe('Task', () => {
       t.logger = l;
     });
 
-    assert.isFalse(t.hasCost);
-
-    const config = mergeObjects({}, exampleTask);
-    config.cost = 1.5;
-    const t2 = Task.fromConfiguration(config, exampleCameleerConf.defaults);
-    assert.isTrue(t2.hasCost);
-
     done();
   });
 
