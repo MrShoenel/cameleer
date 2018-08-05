@@ -1,4 +1,10 @@
 # Cameleer
+<pre>
+    /\_/\  __
+/\_/     \/''\
+   \  _  ____/
+    || ||       . . . . .   let Cameleer move 'them hoofs
+</pre>
 Cameleer is an application that can schedule and execute any kind of job using various queue-types and schedulers.
 
 A few paradigms to get your thinking started:

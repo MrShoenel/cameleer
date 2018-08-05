@@ -1,6 +1,6 @@
 {
   "name": "cameleer",
-  "version": "0.14.2",
+  "version": "0.14.3",
   "description": "Cameleer is a tool that facilitates rich orchestration and task definitions to get jobs done.",
   "main": "index.js",
   "scripts": {
