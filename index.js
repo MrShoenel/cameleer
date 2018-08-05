@@ -12,7 +12,20 @@ const { Cameleer, CameleerJob, CameleerQueue, CameleerWorkEvent, JobFailError,
 , { Manager } = require('./lib/manager/Manager')
 , { ConfigurableClass } = require('./tools/ConfigurableClass')
 , { RetryInterval } = require('./tools/RetryInterval')
-, { SubClassRegister } = require('./tools/SubClassRegister');
+, { SubClassRegister } = require('./tools/SubClassRegister')
+, {
+  FunctionalTaskErrorConfigSchema,
+  FunctionalTaskConfigSchema,
+  SimpleTaskConfigSchema,
+  TaskConfigSchema,
+  CameleerDefaultsSchema,
+  CameleerQueueConfigSchema,
+  CameleerLoggingConfigSchema,
+  CameleerConfigSchema,
+  ConfigurableClassConfigSchema,
+  ControlConfigSchema,
+  ManagerConfigSchema
+} = require('./meta/schemas');
 
 
 module.exports = Object.freeze({
@@ -29,5 +42,17 @@ module.exports = Object.freeze({
   Manager,
   ConfigurableClass,
   RetryInterval,
-  SubClassRegister
+  SubClassRegister,
+  
+  FunctionalTaskErrorConfigSchema,
+  FunctionalTaskConfigSchema,
+  SimpleTaskConfigSchema,
+  TaskConfigSchema,
+  CameleerDefaultsSchema,
+  CameleerQueueConfigSchema,
+  CameleerLoggingConfigSchema,
+  CameleerConfigSchema,
+  ConfigurableClassConfigSchema,
+  ControlConfigSchema,
+  ManagerConfigSchema
 });
