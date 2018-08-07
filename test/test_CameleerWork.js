@@ -122,7 +122,7 @@ describe('CameleerWork', function() {
     assert.isTrue(cJob.context.value === 41);
 
     assert.strictEqual(cJob.functionalTasksDone.length, 1);
-    assert.strictEqual(cJob.functionalTasksDone[0].name, '0');
+    assert.strictEqual(cJob.functionalTasksDone[0].name, '1');
     assert.approximately(cJob.functionalTasksProgress, .5, 1e-12);
 
     await timeout(75);
@@ -132,8 +132,8 @@ describe('CameleerWork', function() {
     assert.isTrue(cJob.context.value === 42);
 
     assert.strictEqual(cJob.functionalTasksDone.length, 2);
-    assert.strictEqual(cJob.functionalTasksDone[0].name, '0');
-    assert.strictEqual(cJob.functionalTasksDone[1].name, '1 (fTask-two)');
+    assert.strictEqual(cJob.functionalTasksDone[0].name, '1');
+    assert.strictEqual(cJob.functionalTasksDone[1].name, '2 (fTask-two)');
     assert.strictEqual(cJob.functionalTasksProgress, 1);
 
     return await c.shutdown();
