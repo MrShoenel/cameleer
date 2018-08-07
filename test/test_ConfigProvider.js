@@ -3,7 +3,7 @@ require('../meta/typedefs');
 const { assert, expect } = require('chai')
 , { assertThrowsAsync } = require('sh.orchestration-tools')
 , { ConfigProvider } = require('../lib/cameleer/ConfigProvider')
-, MyConfigProviderInstance = require('../cli/config.example');
+, StandardConfigProviderInstance = require('../cli/config.example');
 
 
 describe('ConfigProvider', function() {
@@ -23,7 +23,7 @@ describe('ConfigProvider', function() {
     });
 
     await assertThrowsAsync(async() => {
-      await MyConfigProviderInstance.getTaskConfig('foo');
+      await StandardConfigProviderInstance.getTaskConfig('foo');
     });
   });
 });

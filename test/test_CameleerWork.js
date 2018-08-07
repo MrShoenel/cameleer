@@ -9,8 +9,10 @@ const { assert, expect } = require('chai')
     symbolDone, symbolRun, symbolFailed } = require('sh.orchestration-tools')
 , { LogLevel } = require('sh.log-client')
 , exampleConfInstance = require('../cli/config.example')
-, exampleCameleerConf = exampleConfInstance.cameleerConfig
-, MyConfigProvider = exampleConfInstance.constructor;
+, {
+  DefaultCameleerConfig,
+  StandardConfigProvider
+} = require('../lib/cameleer/ConfigProvider');
 
 
 /**
@@ -50,7 +52,7 @@ const getExampleTask = () => {
 
 
 // Will use the default config but the task(s) from above
-with (exampleCameleerConf.logging) {
+with (DefaultCameleerConfig.logging) {
   level = LogLevel.None;
   method = 'none';
 };
@@ -72,11 +74,9 @@ describe('CameleerWork', function() {
         async() => 42
       ]
       /** @type {CameleerConfig} */
-      const cameleerConf = mergeObjects({}, exampleCameleerConf);
+      const cameleerConf = mergeObjects({}, DefaultCameleerConfig);
       cameleerConf.queues = [];
-      const config = new MyConfigProvider(cameleerConf, {
-        test: async() => testTaskCopy
-      });
+      const config = new StandardConfigProvider(cameleerConf, [ testTaskCopy ]);
       const c = new Cameleer(config);
       await c.loadTasks();
 
@@ -99,13 +99,11 @@ describe('CameleerWork', function() {
   });
 
   it('should load our tasks successfully', async function() {
-    assert.isTrue(exampleCameleerConf.defaults.tasks.schedule instanceof Function);
-    assert.isTrue(exampleCameleerConf.defaults.tasks.schedule() instanceof Interval);
+    assert.isTrue(DefaultCameleerConfig.defaults.tasks.schedule instanceof Function);
+    assert.isTrue(DefaultCameleerConfig.defaults.tasks.schedule() instanceof Interval);
 
     const testTaskCopy = getExampleTask();
-    const config = new MyConfigProvider(exampleCameleerConf, {
-      test: async() => testTaskCopy
-    });
+    const config = new StandardConfigProvider(DefaultCameleerConfig, [ testTaskCopy ]);
     const c = new Cameleer(config);
 
     await c.loadTasks();
@@ -124,7 +122,7 @@ describe('CameleerWork', function() {
     assert.isTrue(cJob.context.value === 41);
 
     assert.strictEqual(cJob.functionalTasksDone.length, 1);
-    assert.strictEqual(cJob.functionalTasksDone[0].name, '0');
+    assert.strictEqual(cJob.functionalTasksDone[0].name, '1');
     assert.approximately(cJob.functionalTasksProgress, .5, 1e-12);
 
     await timeout(75);
@@ -134,8 +132,8 @@ describe('CameleerWork', function() {
     assert.isTrue(cJob.context.value === 42);
 
     assert.strictEqual(cJob.functionalTasksDone.length, 2);
-    assert.strictEqual(cJob.functionalTasksDone[0].name, '0');
-    assert.strictEqual(cJob.functionalTasksDone[1].name, '1 (fTask-two)');
+    assert.strictEqual(cJob.functionalTasksDone[0].name, '1');
+    assert.strictEqual(cJob.functionalTasksDone[1].name, '2 (fTask-two)');
     assert.strictEqual(cJob.functionalTasksProgress, 1);
 
     return await c.shutdown();
@@ -143,9 +141,7 @@ describe('CameleerWork', function() {
 
   it('should handle multiple mixed functional tasks within a Task', async() => {
     const testTaskCopy = getExampleTask();
-    const config = new MyConfigProvider(exampleCameleerConf, {
-      test: async() => testTaskCopy
-    });
+    const config = new StandardConfigProvider(DefaultCameleerConfig, [ testTaskCopy ]);
 
     testTaskCopy.tasks = [
       async() => { await timeout(50); return 41; },
@@ -224,11 +220,9 @@ describe('CameleerWork', function() {
   it('should not run tasks if no queues are available', async() => {
     const testTaskCopy = getExampleTask();
     /** @type {CameleerConfig} */
-    const cameleerConfCopy = mergeObjects({}, exampleCameleerConf);
+    const cameleerConfCopy = mergeObjects({}, DefaultCameleerConfig);
     cameleerConfCopy.queues = [];
-    const config = new MyConfigProvider(cameleerConfCopy, {
-      test: async() => testTaskCopy
-    });
+    const config = new StandardConfigProvider(cameleerConfCopy, [ testTaskCopy ]);
 
     testTaskCopy.tasks = [{
       func: () => 42
@@ -263,9 +257,7 @@ describe('CameleerWork', function() {
     this.timeout(5000);
     
     const testTaskCopy = getExampleTask();
-    const config = new MyConfigProvider(exampleCameleerConf, {
-      test: async() => testTaskCopy
-    });
+    const config = new StandardConfigProvider(DefaultCameleerConfig, [ testTaskCopy ]);
 
     testTaskCopy.tasks = [{
       func: () => { throw '42'; },
