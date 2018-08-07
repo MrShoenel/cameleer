@@ -46,7 +46,7 @@ const TaskConfigSchema = Joi.object().keys({
     Joi.string().min(1),
     Joi.func().class()
   ).default('Task', 'The class Task is the base-class').optional(),
-  name: Joi.string().alphanum().min(1).max(255).required(),
+  name: Joi.string().min(1).max(255).required(),
   enabled: Joi.alternatives(
     Joi.bool(),
     Joi.func().arity(0)
@@ -63,7 +63,7 @@ const TaskConfigSchema = Joi.object().keys({
   ).default(false).optional(),
   queues: Joi.alternatives(
     Joi.array().items(
-      Joi.string().alphanum().min(1)
+      Joi.string().min(1)
     ).required().not().empty(),
     Joi.func().arity(0).required()
   ).optional(),
