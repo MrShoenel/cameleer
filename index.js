@@ -25,7 +25,16 @@ const { Cameleer, CameleerJob, CameleerQueue, CameleerWorkEvent, JobFailError,
   ConfigurableClassConfigSchema,
   ControlConfigSchema,
   ManagerConfigSchema
-} = require('./meta/schemas');
+} = require('./meta/schemas')
+, {
+  Progress, ProgressNumeric,
+  ProcessExit, ProcessResult, ProcessErrorResult, ProcessOutput,
+
+  Schedule, ScheduleEvent,
+  Interval, IntervalEventSimple,
+  Calendar, CalendarEventSimple,
+  ManualSchedule, ManualScheduleEventSimple
+} = require('sh.orchestration-tools');
 
 
 module.exports = Object.freeze({
@@ -54,5 +63,13 @@ module.exports = Object.freeze({
   CameleerConfigSchema,
   ConfigurableClassConfigSchema,
   ControlConfigSchema,
-  ManagerConfigSchema
+  ManagerConfigSchema,
+  
+  Progress, ProgressNumeric,
+  ProcessExit, ProcessResult, ProcessErrorResult, ProcessOutput,
+
+  Schedule, ScheduleEvent,
+  Interval, IntervalEventSimple,
+  Calendar, CalendarEventSimple,
+  ManualSchedule, ManualScheduleEventSimple
 });
