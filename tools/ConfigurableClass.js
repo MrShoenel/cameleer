@@ -36,18 +36,12 @@ class ConfigurableClass {
         }
       };
 
-      const schemaConf = Object.getOwnPropertyDescriptor(
-        this.clazz.prototype, 'schemaConf').get();
-      let valResult = Joi.validate(this.config, schemaConf);
+      // Make that the config if this instance conforms to the schema for
+      // ConfigurableClass and also validate against its own schema.
+      let valResult = Joi.validate(this.config, ConfigurableClassConfigSchema);
       checkValResult(valResult);
-
-      // Now check if this is a derived class that also defines a (derived) schema for its config
-      const isSubClass = this.clazz !== Object.getPrototypeOf(this).constructor;
-      if (isSubClass && this.schemaConf !== schemaConf) {
-        // Then we need to validate this subclass' schema as well:
-        valResult = Joi.validate(this.config, this.schemaConf);
-        checkValResult(valResult);
-      }
+      valResult = Joi.validate(this.config, this.schemaConf);
+      checkValResult(valResult);
     }
 
     this.logger = cameleerInstance.getLogger(this.clazz);
@@ -94,6 +88,7 @@ class ConfigurableClass {
       SubClassRegister.registerSubclass(config.type, true);
       ctorFunc = config.type;
     } else {
+      // If we get here, the type must have been previously registered.
       ctorFunc = config.type === ConfigurableClass.name ?
         ConfigurableClass : SubClassRegister.getSubClassForName(ConfigurableClass, config.type);
     }
