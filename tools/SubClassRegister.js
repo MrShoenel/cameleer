@@ -26,73 +26,145 @@ class SubClassRegister {
    */
   static getRegisteredSubclasses(BaseClass) {
     requireIsClassAndRegistered(BaseClass);
-    return new Map(_registeredSubclasses.get(BaseClass).entries());
+    const RootBaseClazz = SubClassRegister.getRootBaseClassOf(BaseClass);
+    return new Map(_registeredSubclasses.get(RootBaseClazz).entries());
   };
 
   /**
-   * @param {Function} BaseClass
-   * @param {Function} ctorFunc The constructor function that creates an instance of
-   * a class that subclasses the BaseClass (or the BaseClass itself).
+   * Register a Sub-class.
+   * 
+   * @param {Function} Clazz The class to register. The root base-class will be deter-
+   * mined automatically, so that it's placed into the correct root.
    * @param {boolean} forceOverride if a class/constructor function with the same name
    * has already been registered, this method will throw, unless this parameter is set
    * to true to allow explicit overriding of a previous registration.
    */
-  static registerSubclass(BaseClass, ctorFunc, forceOverride = false) {
-    requireIsClassAndRegistered(BaseClass);
-    if (typeof ctorFunc !== 'function' || (ctorFunc !== BaseClass && !(ctorFunc.prototype instanceof BaseClass))) {
-      throw new Error(`The argument given for 'ctorFunc' is not a constructor Function for objects of type ${BaseClass.name}.`);
+  static registerSubclass(Clazz, forceOverride = false) {
+    if (typeof Clazz !== 'function') {
+      throw new Error('The given class is not a constructor function.');
     }
 
-    const name = ctorFunc.name;
-    if (_registeredSubclasses.get(BaseClass).has(name) && !forceOverride) {
-      throw new Error(`A class/constructor function with the name '${name}' is already registered and overriding is not allowed.`);
+    const RootBaseClazz = SubClassRegister.getRootBaseClassOf(Clazz);
+    if (RootBaseClazz === Clazz) {
+      if (_registeredSubclasses.has(RootBaseClazz) && !forceOverride) {
+        throw new Error(`The root base-class '${RootBaseClazz.name}' is already registered.`);        
+      }
+      requireIsClassAndRegistered(RootBaseClazz);
+      return;
     }
-    
-    _registeredSubclasses.get(BaseClass).set(name, ctorFunc);
+
+    requireIsClassAndRegistered(RootBaseClazz);
+
+    const name = SubClassRegister._getFQClazzName(Clazz);
+    if (_registeredSubclasses.get(RootBaseClazz).has(name) && !forceOverride) {
+      throw new Error(`A class/constructor function is already registered and overriding is not allowed.`);
+    }
+
+    _registeredSubclasses.get(RootBaseClazz).set(name, Clazz);
   };
 
   /**
-   * Un-registers a previously registered (sub-)Class of the BaseClass by name or by Constructor
-   * (pass in the class itself).
+   * Un-registers a previously registered (sub-)Class.
    * 
-   * @param {Function} BaseClass
-   * @param {Function|string} ctorFuncOrName
-   * @returns {Function} the un-registered constructor-function.
+   * @param {Function} Clazz The sub-class to un-register.
+   * @returns {Function} The un-registered sub-class.
    */
-  static unregisterSubclass(BaseClass, ctorFuncOrName) {
-    requireIsClassAndRegistered(BaseClass);
-    let name = null;
-    if (typeof ctorFuncOrName === 'function') {
-      if (ctorFuncOrName !== BaseClass && !(ctorFuncOrName.prototype instanceof BaseClass)) {
-        throw new Error(`The given constructor function does not produce objects of type ${BaseClass.name}.`);
+  static unregisterSubclass(Clazz) {
+    if (typeof Clazz !== 'function') {
+      throw new Error('The given class is not a constructor function.');
+    }
+
+    const checkRoot = RootBaseClazz => {
+      if (!_registeredSubclasses.has(RootBaseClazz)) {
+        throw new Error(`The root base-class '${RootBaseClazz.name}' is not known.`);
       }
-      name = ctorFuncOrName.name;
-    } else if (typeof ctorFuncOrName === 'string') {
-      name = ctorFuncOrName;
-    } else {
-      throw new Error(`The argument given for 'ctorFuncOrName' must be of type Function or String.`);
+    };
+
+    const RootBaseClazz = SubClassRegister.getRootBaseClassOf(Clazz);
+    if (RootBaseClazz === Clazz) {
+      checkRoot(RootBaseClazz);
+      _registeredSubclasses.delete(RootBaseClazz);
+      return Clazz;
+    }
+    
+    checkRoot(RootBaseClazz);
+
+    if (RootBaseClazz === Clazz) {
+      _registeredSubclasses.delete(RootBaseClazz);
+      return;
     }
 
-    if (!_registeredSubclasses.get(BaseClass).has(name)) {
-      throw new Error(`The class/constructor function with the name '${name}' was not previously registered.`);
+    const name = SubClassRegister._getFQClazzName(Clazz);
+    if (!_registeredSubclasses.get(RootBaseClazz).has(name)) {
+      throw new Error(`The class '${Clazz.name}' is not registered as sub-class of '${RootBaseClazz.name}'.`);
+    }
+    _registeredSubclasses.get(RootBaseClazz).delete(name);
+
+    return Clazz;
+  };
+
+  /**
+   * @param {Function} BaseClazz
+   * @param {string} name
+   */
+  static getSubClassForName(BaseClazz, name) {
+    const RootBaseClazz = SubClassRegister.getRootBaseClassOf(BaseClazz);
+    
+    requireIsClassAndRegistered(RootBaseClazz);
+
+    for (let Clazz of _registeredSubclasses.get(RootBaseClazz).values()) {
+      if (Clazz.name === name) {
+        return Clazz;
+      }
     }
 
-    const ctorFunc = _registeredSubclasses.get(BaseClass).get(name);
-    _registeredSubclasses.get(BaseClass).delete(name);
-    return ctorFunc;
+    throw new Error(`The class with the name '${name}' could not be found as a sub-class of '${BaseClazz.name}'/'${RootBaseClazz.name}'.`);
   }
 
   /**
-   * @param {Function} BaseClass
-   * @param {String} name The name of the class or constructor function
+   * @param {Function} Clazz A class to get super-classes of.
+   * @param {boolean} skipFuncAndObject Optional. Defaults to true. If
+   * true, will skip the super-classes Function and Object.
+   * @returns {IterableIterator.<Function>} An iterator with all of the
+   * given class' super-classes, ordered. The last class returned is the
+   * root base-class.
+   */
+  static *getSubClassesOf(Clazz, skipFuncAndObject = true) {
+    let proto = Object.getPrototypeOf(Clazz);
+
+    do {
+      if (proto === null || (proto.prototype === void 0 && skipFuncAndObject)) {
+        break; // Otherwise it will go down to Function and Object
+      }
+
+      yield proto;
+
+      proto = Object.getPrototypeOf(proto);
+    } while (proto !== null);
+  };
+
+  /**
+   * @param {Function} Clazz A class to get the root base-class of. If
+   * this class is already the root base-class, it is returned.
    * @returns {Function}
    */
-  static getClassForName(BaseClass, name) {
-    requireIsClassAndRegistered(BaseClass);
-    if (!_registeredSubclasses.get(BaseClass).has(name)) {
-      throw new Error(`The class or constructor function '${name}' is not registered.`);
+  static getRootBaseClassOf(Clazz) {
+    const baseClasses = [...SubClassRegister.getSubClassesOf(Clazz, true)];
+    if (baseClasses.length === 0) {
+      return Clazz;
     }
-    return _registeredSubclasses.get(BaseClass).get(name);
+    return baseClasses.pop();
+  };
+
+  /**
+   * @param {Function} Clazz A class to build the name based on its inheritance-
+   * tree foo.
+   * @returns {string} In the form 'A-B-C' where C is the given Class and A and
+   * B are its super-classes.
+   */
+  static _getFQClazzName(Clazz) {
+    const baseClasses = [...SubClassRegister.getSubClassesOf(Clazz)].map(clazz => clazz.name).reverse().join('-');
+    return `${baseClasses}${baseClasses.length === 0 ? '' : '-'}${Clazz.name}`;
   };
 };
 
