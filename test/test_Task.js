@@ -42,17 +42,17 @@ describe('Task', () => {
 
     assert.notEqual(org1, org2);
 
-    SubClassRegister.registerSubclass(Task, Y);
+    SubClassRegister.registerSubclass(Y);
     const org3 = SubClassRegister.getRegisteredSubclasses(Task);
     assert.notEqual(org2, org3);
 
-    SubClassRegister.getRegisteredSubclasses(Task).delete('Y');
+    SubClassRegister.getRegisteredSubclasses(Task).delete('Task-Y');
 
     const org4 = SubClassRegister.getRegisteredSubclasses(Task);
-    assert.isTrue(org4.has('Y'));
+    assert.isTrue(org4.has('Task-Y'));
     
-    const Y_Class = SubClassRegister.unregisterSubclass(Task, Y.name);
-    assert.isTrue(!SubClassRegister.getRegisteredSubclasses(Task).has('Y'));
+    const Y_Class = SubClassRegister.unregisterSubclass(Y);
+    assert.isTrue(!SubClassRegister.getRegisteredSubclasses(Task).has('Task-Y'));
     assert.strictEqual(Y_Class, Y);
 
     done();
@@ -73,17 +73,13 @@ describe('Task', () => {
     });
 
     assert.throws(() => {
-      SubClassRegister.registerSubclass(Task, Date);
-    });
-
-    assert.throws(() => {
-      SubClassRegister.unregisterSubclass(Task, Date);
+      SubClassRegister.unregisterSubclass(Date);
     });
     assert.throws(() => {
-      SubClassRegister.unregisterSubclass(Task, new Date);
+      SubClassRegister.unregisterSubclass(new Date);
     });
     assert.throws(() => {
-      SubClassRegister.unregisterSubclass(Task, Y);
+      SubClassRegister.unregisterSubclass(Y);
     });
 
     done();
@@ -144,7 +140,7 @@ describe('Task', () => {
       const y = Task.fromConfiguration(conf, exampleCameleerConf.defaults);
     });
 
-    SubClassRegister.registerSubclass(Task, Y);
+    SubClassRegister.registerSubclass(Y);
     const y = Task.fromConfiguration(conf, exampleCameleerConf.defaults);
 
     assert.isTrue(y instanceof Y);

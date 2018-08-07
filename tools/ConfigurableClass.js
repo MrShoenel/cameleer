@@ -91,11 +91,11 @@ class ConfigurableClass {
     }
 
     if (config.type instanceof Function) {
-      SubClassRegister.registerSubclass(ConfigurableClass, config.type, true);
+      SubClassRegister.registerSubclass(config.type, true);
       ctorFunc = config.type;
     } else {
       ctorFunc = config.type === ConfigurableClass.name ?
-        ConfigurableClass : SubClassRegister.getClassForName(ConfigurableClass, config.type);
+        ConfigurableClass : SubClassRegister.getSubClassForName(ConfigurableClass, config.type);
     }
     
     return new ctorFunc(cameleerInstance, config);
