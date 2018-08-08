@@ -100,7 +100,7 @@ const CameleerDefaultsSchema = Joi.object().keys({
 }).strict();
 
 const CameleerQueueConfigSchema = Joi.object().keys({
-  name: Joi.string().alphanum().min(1).required(),
+  name: Joi.string().min(1).required(),
   enabled: Joi.boolean().required(),
   type: Joi.alternatives('cost', 'parallel'),
   isDefault: Joi.boolean().default(false).optional(),
