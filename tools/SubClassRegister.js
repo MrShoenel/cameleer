@@ -119,7 +119,7 @@ class SubClassRegister {
     }
 
     throw new Error(`The class with the name '${name}' could not be found as a sub-class of '${BaseClazz.name}'/'${RootBaseClazz.name}'.`);
-  }
+  };
 
   /**
    * @param {Function} Clazz A class to get super-classes of.

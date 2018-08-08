@@ -103,6 +103,7 @@ const CameleerQueueConfigSchema = Joi.object().keys({
   name: Joi.string().alphanum().min(1).required(),
   enabled: Joi.boolean().required(),
   type: Joi.alternatives('cost', 'parallel'),
+  isDefault: Joi.boolean().default(false).optional(),
   parallelism: Joi.number().integer().greater(0).optional(),
   capabilities: Joi.number().greater(0).optional(),
   allowExclusiveJobs: Joi.boolean().optional()
@@ -110,9 +111,12 @@ const CameleerQueueConfigSchema = Joi.object().keys({
 
 const CameleerLoggingConfigSchema = Joi.object().keys({
   level: Joi.number().integer().required(),
-  method: Joi.string().min(1).optional(),
-  endpoint: Joi.string().min(1).optional(),
-  numInMemory: Joi.number().integer().min(0).default(1000).optional()
+  method: Joi.alternatives(
+    Joi.string().regex(/^none$/),
+    Joi.string().regex(/^console$/)
+  ).required(),
+  numInMemory: Joi.number().integer().min(0).default(1000).optional(),
+  endpoint: Joi.string().min(1).optional()
 });
 
 const CameleerConfigSchema = Joi.object().keys({
