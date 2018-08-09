@@ -1,9 +1,8 @@
 require('../meta/typedefs');
 
-const { ProgressNumeric, Interval, timeout
-} = require('sh.orchestration-tools')
+const { assert } = require('chai')
+, { ProgressNumeric, Interval, timeout } = require('sh.orchestration-tools')
 , Schemas = require('../meta/schemas')
-, Joi = require('joi')
 , Felicity = require('felicity');
 
 
@@ -63,8 +62,22 @@ createCameleerConfig = () => {
 };
 
 
+/**
+ * @param {(...any) => Promise.<*>} fn
+ * @returns {Promise.<void>}
+ */
+const assertDoesNotThrowAsync = async fn => {
+  try {
+    await fn();
+  } catch (e) {
+    throw e;
+  }
+};
+
+
 module.exports = Object.freeze({
   createExampleTaskConfig,
   createExampleInstance,
-  createCameleerConfig
+  createCameleerConfig,
+  assertDoesNotThrowAsync
 });
