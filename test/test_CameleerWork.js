@@ -10,7 +10,7 @@ const { assert, expect } = require('chai')
 , { LogLevel } = require('sh.log-client')
 , exampleConfInstance = require('../cli/config.example')
 , {
-  DefaultCameleerConfig,
+  createDefaultCameleerConfig,
   StandardConfigProvider
 } = require('../lib/cameleer/ConfigProvider');
 
@@ -18,9 +18,9 @@ const { assert, expect } = require('chai')
 /**
  * @returns {TaskConfig}
  */
-const getExampleTask = () => {
-  return testTask = {
-    name: 'testTask',
+const getExampleTask = (name = 'testTask') => {
+  return {
+    name,
     enabled: async() => true,
     skip: () => false,
     allowMultiple: false,
@@ -49,6 +49,9 @@ const getExampleTask = () => {
     ]
   };
 };
+
+
+const DefaultCameleerConfig = createDefaultCameleerConfig();
 
 
 // Will use the default config but the task(s) from above
@@ -209,14 +212,6 @@ describe('CameleerWork', function() {
     return await Promise.all([ startStopPromise, c.shutdown() ]);
   });
 
-  it('should select the best-matching queue for the Job', async() => {
-
-  });
-
-  it('should not run tasks that are to be skipped or not allowed mutliple', async() => {
-
-  });
-
   it('should not run tasks if no queues are available', async() => {
     const testTaskCopy = getExampleTask();
     /** @type {CameleerConfig} */
@@ -281,6 +276,240 @@ describe('CameleerWork', function() {
     assert.isTrue(failed);
 
     await Promise.all([ runPromise, c.shutdown() ]);
+  });
+
+  it('should select the default queue if available and task does not specify', async function() {
+    const testTaskCopy = getExampleTask();
+    const conf = createDefaultCameleerConfig();
+    conf.logging.method = 'none';
+    conf.queues = [{
+      name: 'q1',
+      isDefault: true,
+      enabled: true,
+      type: 'cost',
+      capabilities: 4.3
+    }];
+    
+    // Do not select any queues
+    delete testTaskCopy.queues;
+    testTaskCopy.cost = 2.7;
+
+    const m = new ManualSchedule();
+    testTaskCopy.schedule = m;
+
+    testTaskCopy.tasks = [async() => { await timeout(100); }];
+
+    const config = new StandardConfigProvider(conf, [ testTaskCopy ]);
+    const cameleer = new Cameleer(config);
+    const cq = cameleer._queuesArr[0];
+    assert.strictEqual(cameleer._queuesArr.length, 1);
+
+    await cameleer.loadTasks();
+    const runPromise = cameleer.runAsync();
+
+    m.triggerNext();
+    await timeout(50);
+    assert.isTrue(cq.queue.isWorking);
+
+    await Promise.all([ runPromise, cameleer.shutdown() ]);
+  });
+
+  it('should not enqueue tasks if their config cannot be resolved', async() => {
+    const conf = createDefaultCameleerConfig();
+    conf.logging.method = 'none';
+    const testTaskCopy = getExampleTask();
+    const ms = new ManualSchedule();
+    testTaskCopy.schedule = ms;
+    let x = false;
+    testTaskCopy.allowMultiple = async() => {
+      await timeout(10);
+      if (!x) {
+        x = true;
+        throw 'FU';
+      }
+      throw new Error('FU');
+    };
+    const config = new StandardConfigProvider(conf, [ testTaskCopy ]);
+    const cameleer = new Cameleer(config);
+
+    await cameleer.loadTasks();
+
+    const runPromise = cameleer.runAsync();
+    ms.trigger();
+
+    await timeout(100);
+
+    ms.trigger();
+    await timeout(100);
+
+    const cq = cameleer._queuesArr[0];
+    assert.strictEqual(cq.queue.numJobsDone, 0);
+    assert.strictEqual(cq.queue.numJobsRunning, 0);
+    assert.strictEqual(cq.queue.numJobsFailed, 0);
+
+    await Promise.all([ runPromise, cameleer.shutdown() ]);
+  });
+
+  it('should not enqueue tasks that are to be skipped are non-multiple', async() => {
+    const conf = createDefaultCameleerConfig();
+    conf.logging.method = 'none';
+    const m1 = new ManualSchedule(), m2 = new ManualSchedule();
+    
+    const t1 = getExampleTask();
+    t1.name = 't1';
+    t1.allowMultiple = false;
+    t1.schedule = m1;
+    t1.tasks = [async() => { await timeout(100) }];
+
+    const t2 = getExampleTask();
+    t2.name = 't2';
+    t2.skip = async() => { await timeout(5); return true; };
+    t2.schedule = m2;
+    
+    const config = new StandardConfigProvider(conf, [ t1, t2 ]);
+    const cameleer = new Cameleer(config);
+
+    const runPromise = cameleer.runAsync();
+
+    await cameleer.loadTasks();
+    m1.triggerNext();
+    m2.triggerNext();
+    // t1 runs, t2 is skipped -> but t1 is not allowed mutliple times
+
+    await timeout(50); // t2 should be done (and t1 running)
+    assert.isTrue(cameleer._isTaskEnqueuedOrRunning(cameleer._tasks['t1']));
+    const q = cameleer._queuesArr[0].queue;
+    assert.strictEqual(q.numJobsDone, 0);
+    assert.strictEqual(q.numJobsRunning, 1);
+    assert.strictEqual(q.numJobsFailed, 0);
+    assert.isTrue(q.utilization > 0);
+
+    m1.triggerNext();
+    await timeout(25);
+    assert.strictEqual(q.backlog, 0); // should not have been enqueued
+
+    await timeout(50);
+    assert.strictEqual(q.numJobsDone, 1);
+    assert.strictEqual(q.numJobsRunning, 0);
+    assert.strictEqual(q.numJobsFailed, 0);
+    assert.strictEqual(q.utilization, 0);
+
+    await Promise.all([ runPromise, cameleer.shutdown() ]);
+  });
+
+  it('should throw if the task demands Queues not defined', async() => {
+    const testTaskCopy = getExampleTask();
+    const conf = createDefaultCameleerConfig();
+    conf.logging.method = 'none';
+    
+    testTaskCopy.queues = ['notExistingQueue'];
+    const m = new ManualSchedule();
+    testTaskCopy.schedule = m;
+
+    testTaskCopy.tasks = [async() => { await timeout(100); }];
+
+    const config = new StandardConfigProvider(conf, [ testTaskCopy ]);
+    const cameleer = new Cameleer(config);
+
+    await cameleer.loadTasks();
+    const resolvedConf = await cameleer._tasksArr[0].resolveConfig();
+
+    assert.throws(() => {
+      cameleer._selectBestMatchingQueue(resolvedConf);
+    }, /None of the Queues as demanded by task/i);
+
+    await cameleer.shutdown();
+  });
+
+  it('should only select appropriate Queues for a Task', async() => {
+    const conf = createDefaultCameleerConfig();
+    conf.logging.method = 'none';
+    conf.queues = [{
+      enabled: true,
+      name: 'q0',
+      type: 'parallel',
+      parallelism: 10
+    }, {
+      enabled: true,
+      name: 'q1',
+      type: 'cost',
+      capabilities: 1.5,
+      allowExclusiveJobs: false
+    }, {
+      enabled: true,
+      name: 'q2',
+      type: 'cost',
+      capabilities: 2.5,
+      allowExclusiveJobs: false
+    }, {
+      enabled: true,
+      name: 'q3',
+      type: 'cost',
+      capabilities: 0.5,
+      allowExclusiveJobs: true
+    }];
+
+    const t1 = getExampleTask('t1');
+    const t2 = getExampleTask('t2');
+    const t3 = getExampleTask('t3');
+
+    t1.cost = 1.1;
+    t2.cost = 2.1;
+    t3.cost = 4.5;
+
+    t1.queues = t2.queues = t3.queues = ['q0', 'q1', 'q2', 'q3'];
+
+    const config = new StandardConfigProvider(conf, [ t1, t2, t3 ]);
+    const cameleer = new Cameleer(config);
+
+    await cameleer.loadTasks();
+    const [r1, r2, r3] = await Promise.all([
+      cameleer._tasks['t1'].resolveConfig(),
+      cameleer._tasks['t2'].resolveConfig(),
+      cameleer._tasks['t3'].resolveConfig()
+    ]);
+
+    let q = cameleer._selectBestMatchingQueue(r1);
+    assert.strictEqual(q.name, 'q2');
+
+    q = cameleer._selectBestMatchingQueue(r2);
+    assert.strictEqual(q.name, 'q2');
+
+    q = cameleer._selectBestMatchingQueue(r3);
+    assert.strictEqual(q.name, 'q3');
+
+    await cameleer.shutdown();
+  });
+
+  it(`should have its Tasks remain in the Queue's backlog if too busy`, async() => {
+    const conf = createDefaultCameleerConfig();
+    conf.logging.method = 'none';
+    const t1 = getExampleTask('t1');
+    const m1 = new ManualSchedule();
+    t1.allowMultiple = true;
+    t1.schedule = m1;
+    t1.tasks = [{
+      func: async() => await timeout(150)
+    }];
+
+    const config = new StandardConfigProvider(conf, [ t1 ]);
+    const cameleer = new Cameleer(config);
+
+    await cameleer.loadTasks();
+    const runPromise = cameleer.runAsync();
+
+    m1.triggerNext();
+    await timeout(50);
+    assert.isTrue(cameleer._isTaskRunning(cameleer._tasks['t1']));
+    assert.isFalse(cameleer._isTaskEnqueued(cameleer._tasks['t1']));
+
+    m1.triggerNext();
+    await timeout(50);
+    assert.isTrue(cameleer._isTaskRunning(cameleer._tasks['t1']));
+    assert.isTrue(cameleer._isTaskEnqueued(cameleer._tasks['t1']));
+
+    await cameleer.shutdown();
+    await runPromise;
   });
 });
 
