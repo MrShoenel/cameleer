@@ -110,6 +110,34 @@ describe('CameleerJob', function() {
 
 
 describe('Cameleer', function() {
+  it('should handle global rejections or uncaught errors', async() => {
+    const camConf = createDefaultCameleerConfig();
+    camConf.logging.method = 'none';
+    const std = new StandardConfigProvider(camConf, []);
+    const cameleer = new Cameleer(std);
+
+    new Promise((res, rej) => {
+      rej();
+    });
+
+    // We cannot actually throw an Error that will be unhandled..
+    // setTimeout(() => {
+    //   throw new Error();
+    // }, 50);
+    cameleer._handleUncaughtErrors(new Error('42'));
+
+    await timeout(150);
+
+    assert.isTrue(true);
+    await cameleer.shutdown();
+
+
+    camConf.defaults.handleGlobalErrors = false;
+    camConf.defaults.handleGlobalRejections = false;
+    const cam2 = new Cameleer(new StandardConfigProvider(camConf)); // to cover the else-branch
+    await cam2.shutdown();
+  });
+
   it('should not configurations with duplicate task-names', async() => {
     const camConf = createDefaultCameleerConfig();
     camConf.logging.method = 'none';
