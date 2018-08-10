@@ -41,7 +41,7 @@
 /**
  * @typedef FunctionalTaskErrorConfig
  * @type {Object}
- * @property {() => (Schedule|Promise.<Schedule>)} schedule A schedule that is used to retry this task after it failed. The task will be retried for as long as the schedule given schedules it or until it succeeds.
+ * @property {() => (Schedule|Promise.<Schedule>)} schedule A schedule that is used to retry this task after it failed. The task will be retried for as long as the schedule given schedules it or until it succeeds. Note that, should the schedule complete/finish/drain and retry-attempts are left, no furter recoveries will be attempted (i.e. the excess retries left will not be used).
  * @property {number|(() => (number|Promise.<number>)} [maxNumFails] Optional. Defaults to Number.MAX_SAFE_INTEGER. If a task fails, its fail-counter is increased. If maxNumFails is specified and the amount of fails reaches that value, that task is considered having failed finally.
  * @property {boolean|(() => (boolean|Promise.<boolean>)} [skip] Optional. Defaults to false. This property is evaluated every time when the task is scheduled to run according to the given schedule. If you specify a literal boolean value, a failed task can be skipped after it failed the first time, i.e. if you provide 'true', the task will be skipped after initial failure immediately without having to wait for its rescheduling.
  * @property {boolean|(() => (boolean|Promise.<boolean>)} [continueOnFinalFail] Optional. Defaults to 'false'. This property determines how to continue after this task finally failed (i.e. no attempts are left). Providing 'true' will lead to the program continuing with the next task. 'false' on the other hand will stop the entire task and prevent any more sub-tasks from executing.

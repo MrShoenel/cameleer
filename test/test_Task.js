@@ -36,6 +36,39 @@ class Y extends Task {};
 
 
 describe('Task', () => {
+  it('should provide a meaningful toString-tag', done => {
+    class FooMyTask extends Task {
+      constructor(a,b){
+        super(a,b);
+      };
+    };
+    
+    /** @type {TaskConfig} */
+    const exampleTask = getExampleTask();
+    exampleTask.enabled = true;
+
+    const task = Task.fromConfiguration(exampleTask, exampleCameleerConf.defaults);
+    assert.strictEqual(task.toString(), '[object Task]');
+
+    exampleTask.type = FooMyTask;
+    const myTask = Task.fromConfiguration(exampleTask, exampleCameleerConf.defaults);
+    assert.strictEqual(myTask.toString(), '[object FooMyTask]');
+
+    done();
+  });
+
+  it('should use the Task-class, if it was explicitly specified by name', done => {
+    /** @type {TaskConfig} */
+    const exampleTask = getExampleTask();
+    exampleTask.enabled = true;
+    exampleTask.type = Task.name;
+
+    const task = Task.fromConfiguration(exampleTask, exampleCameleerConf.defaults);
+    assert.strictEqual(task.constructor, Task);
+
+    done();
+  });
+
   it('should provide an immutable Map with registered sub-classes', done => {
     const org1 = SubClassRegister.getRegisteredSubclasses(Task);
     const org2 = SubClassRegister.getRegisteredSubclasses(Task);

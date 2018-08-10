@@ -7,7 +7,10 @@ const Joi = require('joi');
  */
 
 const FunctionalTaskErrorConfigSchema = Joi.object().keys({
-  schedule: Joi.func().required(),
+  schedule: Joi.alternatives(
+    Joi.object()/*.type(Schedule)*/.required(),
+    Joi.func().required()
+  ).required(),
   skip: Joi.alternatives(
     Joi.boolean().required(),
     Joi.func().arity(0).required()
@@ -35,9 +38,9 @@ const FunctionalTaskConfigSchema = Joi.object().keys({
 });
 
 
-const SimpleTaskConfigSchema = Joi.alternatives(
-  Joi.func().required(),
-  FunctionalTaskConfigSchema
+const SimpleTaskConfigSchema = Joi.array().items(
+  FunctionalTaskConfigSchema,
+  Joi.func()
 );
 
 
@@ -71,11 +74,15 @@ const TaskConfigSchema = Joi.object().keys({
     Joi.object(),
     Joi.func()
   ).default(null).optional(),
-  schedule: Joi.object().required(), // We require a resolved property!
-  tasks: Joi.array().items(
-    Joi.func(),
-    SimpleTaskConfigSchema
-  ).default([]).optional()
+  schedule: Joi.object()/*.type(Schedule)*/.required(), // We require a resolved property!
+  tasks: Joi.alternatives(
+    SimpleTaskConfigSchema,
+    Joi.array().items(
+      // Joi.object().type(Task),
+      FunctionalTaskConfigSchema,
+      Joi.func()
+    )
+  ).default([]).optional(true)
 }).strict().unknown(true);
 
 

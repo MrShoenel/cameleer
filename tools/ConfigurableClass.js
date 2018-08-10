@@ -1,6 +1,7 @@
 require('../meta/typedefs');
 
 const Joi = require('joi')
+, { inspect } = require('util')
 , { Cameleer } = require('../lib/cameleer/Cameleer')
 , { ConfigurableClassConfigSchema } = require('../meta/schemas')
 , { mergeObjects } = require('sh.orchestration-tools')
@@ -32,7 +33,7 @@ class ConfigurableClass {
       /** @param {ValidationResult.<any>} */
       const checkValResult = result => {
         if (result.error !== null) {
-          throw new Error(`The given configuration is not valid: ${util.inspect(result.error)}`);
+          throw new Error(`The given configuration is not valid: ${inspect(result.error)}`);
         }
       };
 
@@ -81,7 +82,7 @@ class ConfigurableClass {
     let ctorFunc = null;
 
     if (ConfigurableClassConfigSchema.validate(config).error !== null) {
-      throw new Error(`The given config for the Control is not valid.`);
+      throw new Error(`The given config is not valid.`);
     }
 
     if (config.type instanceof Function) {

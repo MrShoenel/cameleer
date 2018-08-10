@@ -17,7 +17,7 @@ const { Task } = require('../lib/cameleer/Task')
 const exampleTasks = [Task.fromConfiguration({
   name: 'myTask',
   enabled: true,
-  schedule: new Interval(1e4, () => {}, -1, true, false),
+  schedule: new Interval(1e4, null, -1, true, false),
   queues: [], // Should be run on the default parallel queue
   tasks: [
     /**
@@ -28,7 +28,7 @@ const exampleTasks = [Task.fromConfiguration({
      */
     async job => {
       job.task.logger.logInfo('Running the functional task.');
-      await timeout(1500);
+      await timeout(500);
       return 42;
     }
   ]

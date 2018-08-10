@@ -86,13 +86,6 @@ class SubClassRegister {
       _registeredSubclasses.delete(RootBaseClazz);
       return Clazz;
     }
-    
-    checkRoot(RootBaseClazz);
-
-    if (RootBaseClazz === Clazz) {
-      _registeredSubclasses.delete(RootBaseClazz);
-      return;
-    }
 
     const name = SubClassRegister._getFQClazzName(Clazz);
     if (!_registeredSubclasses.get(RootBaseClazz).has(name)) {

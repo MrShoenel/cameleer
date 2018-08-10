@@ -1,12 +1,16 @@
 require('../meta/typedefs');
 
-const { assert, expect } = require('chai')
-, { assertThrowsAsync, timeout, mergeObjects, ManualSchedule } = require('sh.orchestration-tools')
+const Joi = require('joi')
+, { Observable, Subscriber } = require('rxjs')
+, { assert, expect } = require('chai')
+, { assertThrowsAsync, timeout, mergeObjects, Calendar, CalendarScheduler, Interval, IntervalScheduler, ManualSchedule, ManualScheduler, Schedule } = require('sh.orchestration-tools')
 , { DevNullLogger } = require('sh.log-client')
-, { CameleerJob } = require('../lib/cameleer/Cameleer')
+, { CameleerJob, JobFailError } = require('../lib/cameleer/Cameleer')
 , { Task } = require('../lib/cameleer/Task')
 , { ResolvedConfig } = require('../lib/cameleer/ResolvedConfig')
 , { RunAttempt, ErrorTypes, AttemptError } = require('../lib/cameleer/RunAttempt')
+, { RetryInterval } = require('../tools/RetryInterval')
+, { TaskConfigSchema, SimpleTaskConfigSchema, FunctionalTaskConfigSchema, FunctionalTaskErrorConfigSchema } = require('../meta/schemas')
 , { Result, ErrorResult } = require('../lib/cameleer/Result')
 , { getExampleTask } = require('./test_CameleerWork')
 , { cameleerConfig } = require('../cli/config.example');
@@ -124,6 +128,24 @@ describe('RunAttempt', function() {
     });
   });
 
+  it('should pick the correct scheduler', async() => {
+    const exampleTask = createTasks([ funcTaskConfErrConfErr ]);
+    const cJob = await createCamJob(exampleTask, cameleerConfig.defaults);
+    const ra = new RunAttempt(cJob.conf.tasks[0], cJob);
+
+    class UnknowSchedule extends Schedule {
+      constructor() { super(); };
+    };
+
+    assert.throws(() => {
+      ra._getSchedulerForSchedule(new UnknowSchedule());
+    });
+
+    assert.isTrue(ra._getSchedulerForSchedule(new Calendar('a', () => '')) instanceof CalendarScheduler);
+    assert.isTrue(ra._getSchedulerForSchedule(new Interval(1)) instanceof IntervalScheduler);
+    assert.isTrue(ra._getSchedulerForSchedule(new ManualSchedule()) instanceof ManualScheduler);
+  });
+
   it('should throw for erroneous Error-configurations', async() => {
     const exampleTask = createTasks([ funcTaskConfErrConfErr ]);
     const cJob = await createCamJob(exampleTask, cameleerConfig.defaults);
@@ -163,6 +185,235 @@ describe('RunAttempt', function() {
     } finally {
       assert.isTrue(threw);
     }
+  });
+
+  it('should return a regular result, if the task shall continue finally', async function() {
+    const ri = new RetryInterval(25, 1, false);
+
+    const exampleTask = createTasks([{
+      canFail: {
+        continueOnFinalFail: true,
+        schedule: () => ri
+      },
+      func: job => {
+        throw 'FU';
+      }
+    }]);
+
+    const cJob = await createCamJob(exampleTask, cameleerConfig.defaults);
+    const ra = new RunAttempt(cJob.conf.tasks[0], cJob);
+
+    const result = await ra.run();
+    assert.isTrue(result instanceof Result);
+    assert.isTrue(result.isError);
+  });
+
+  it('should throw if a finally failing task must not continue', async function() {
+    const ri = new RetryInterval(25, 1, false);
+
+    const exampleTask = createTasks([{
+      canFail: {
+        continueOnFinalFail: async() => false,
+        schedule: () => ri
+      },
+      func: job => {
+        throw 'FU';
+      }
+    }]);
+
+    const cJob = await createCamJob(exampleTask, cameleerConfig.defaults);
+    const ra = new RunAttempt(cJob.conf.tasks[0], cJob);
+
+    let threw = false;
+    try {
+      await cJob.run();
+    } catch (e) {
+      threw = true;
+      assert.isTrue(e instanceof JobFailError);
+      assert.isTrue(cJob.hasFailed);
+    } finally {
+      assert.isTrue(threw);
+    }
+  });
+
+  it('should not attempt recovery if the schedule errors', async function() {
+    const ms = new ManualSchedule();
+
+    const exampleTask = createTasks([{
+      canFail: {
+        continueOnFinalFail: false,
+        schedule: () => {
+          return ms;
+        },
+        maxNumFails: 2 // We will fail once and then make the schedule drain.
+      },
+      func: async() => {
+        await timeout(10);
+        throw 'FU';
+      }
+    }]);
+
+    const cJob = await createCamJob(exampleTask, cameleerConfig.defaults);
+    const ra = new RunAttempt(cJob.conf.tasks[0], cJob);
+
+    const raProm = ra.run();
+    await timeout(50);
+    assert.isTrue(ra.regularAttemptFailed);
+
+    // now attempt one recovery and wait for it to finish:
+    ms.triggerNext();
+    await timeout(50);
+    assert.strictEqual(ra.numSubSequentFails, 1);
+    assert.isTrue(ra.numSubSequentFails < ra.conf.canFail.maxNumFails); // we have one left
+
+    // Now drain the schedule:
+    ms.triggerError('FU');
+    
+    let threw = false;
+    try {
+      // The task should have finally failed.
+      await raProm;
+    } catch (e) {
+      threw = true;
+      assert.isTrue(e instanceof AttemptError);
+    } finally {
+      assert.isTrue(threw);
+    }
+  });
+
+  it('should not attempt recovery if the schedule drains prematurely', async function() {
+    const ms = new ManualSchedule();
+
+    const exampleTask = createTasks([{
+      canFail: {
+        continueOnFinalFail: false,
+        schedule: () => {
+          return ms;
+        },
+        maxNumFails: 2 // We will fail once and then make the schedule drain.
+      },
+      func: async() => {
+        await timeout(10);
+        throw 'FU';
+      }
+    }]);
+
+    const cJob = await createCamJob(exampleTask, cameleerConfig.defaults);
+    const ra = new RunAttempt(cJob.conf.tasks[0], cJob);
+
+    const raProm = ra.run();
+    await timeout(50);
+    assert.isTrue(ra.regularAttemptFailed);
+
+    // now attempt one recovery and wait for it to finish:
+    ms.triggerNext();
+    await timeout(50);
+    assert.strictEqual(ra.numSubSequentFails, 1);
+    assert.isTrue(ra.numSubSequentFails < ra.conf.canFail.maxNumFails); // we have one left
+
+    // Now drain the schedule:
+    ms.triggerComplete();
+    
+    let threw = false;
+    try {
+      // The task should have finally failed.
+      await raProm;
+    } catch (e) {
+      threw = true;
+      assert.isTrue(e instanceof AttemptError);
+    } finally {
+      assert.isTrue(threw);
+    }
+  });
+
+  it('should abort recovery, if the schedule fails or drains', async function() {
+    const ms = new ManualSchedule();
+
+    const exampleTask = createTasks([{
+      canFail: {
+        continueOnFinalFail: true,
+        schedule: () => {
+          return ms;
+        },
+        maxNumFails: 2
+      },
+      func: async job => {
+        if (!job.context.x) {
+          job.context.x = true; // so the first regular attempt fails immediately
+        } else {
+          await timeout(100);
+        }
+
+        throw 'FU';
+      }
+    }]);
+
+    const cJob = await createCamJob(exampleTask, cameleerConfig.defaults);
+    const ra = new RunAttempt(cJob.conf.tasks[0], cJob);
+
+    const raProm = ra.run();
+
+    await timeout(50);
+    ms.triggerNext();
+    await timeout(50);
+    ms.triggerError('SUBS_ERROR');
+
+    // Now the RA is rejected regularly, not with the subscriber's error,
+    // because it was within a run-attempt:
+    const result = await raProm;
+    assert.isTrue(result instanceof Result);
+    assert.isTrue(result.isError);
+    assert.strictEqual(result.error.error.message,
+      'The recovery-schedule for the functional task failed.');
+  });
+
+  it('should not attempt a recovery, if one is already running', async() => {
+    // We need a job that fails regularly, is triggered by an error-schedule,
+    // takes some time to compute (so that we can trigger another attempt).
+    // Also, the retries should be limited to 2 (maxNumFails) so that we can
+    // assert the 2nd attempt did not happen while the first was running.
+
+    const ms = new ManualSchedule();
+
+    const exampleTask = createTasks([{
+      canFail: {
+        continueOnFinalFail: true,
+        schedule: () => ms,
+        maxNumFails: 2
+      },
+      func: async job => {
+        if (!job.context.x) {
+          job.context.x = true; // so the first regular attempt fails immediately
+        } else {
+          await timeout(100);
+        }
+
+        throw 'FU';
+      }
+    }]);
+
+    const cJob = await createCamJob(exampleTask, cameleerConfig.defaults);
+    const ra = new RunAttempt(cJob.conf.tasks[0], cJob);
+
+    const raProm = ra.run()
+    await timeout(50); // Give enough time to go into _runErroredBySchedule
+    assert.isTrue(ra.regularAttemptFailed);
+
+    ms.trigger();
+    await timeout(50);
+    // Recovery-attempt #1 should still be running, trigger again:
+    ms.trigger();
+    await timeout(250);
+    // Allow enough time for task being done potentially twice (should not have happened)
+    // R-A #1 should be done, let's make some assertions
+    assert.strictEqual(ra.numSubSequentFails, 1);
+    assert.isTrue(ra._schedManual.hasSchedule(ms)); // It's still in recovery-phase
+
+    ms.trigger();
+
+    const result = await raProm;
+    assert.isTrue(result instanceof Result);
+    assert.isTrue(result.isError);
   });
 
   it('should, if running errored, not attempt twice', async function() {
