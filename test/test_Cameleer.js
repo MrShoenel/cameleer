@@ -1,13 +1,16 @@
 require('../meta/typedefs');
 
 const { assert, expect } = require('chai')
+, { inspect } = require('util')
+, { Observable } = require('rxjs')
+, { assertDoesNotThrowAsync } = require('./helpers')
 , { assertThrowsAsync, mergeObjects, ProgressNumeric,
   timeout, ManualSchedule, Calendar, Interval, symbolDone,
   CalendarScheduler, IntervalScheduler, ManualScheduler,
   symbolRun, symbolFailed, Schedule, Resolve
 } = require('sh.orchestration-tools')
 , { Task } = require('../lib/cameleer/Task')
-, { Cameleer, CameleerJob, symbolCameleerShutdown,
+, { Cameleer, CameleerJob, JobFailError, symbolCameleerShutdown,
     symbolCameleerSchedule, symbolCameleerWork } = require('../lib/cameleer/Cameleer')
 , { LogLevel } = require('sh.log-client')
 , {
@@ -17,6 +20,93 @@ const { assert, expect } = require('chai')
 , { Control } = require('../lib/control/Control')
 , { Manager } = require('../lib/manager/Manager')
 , { CameleerConfigSchema } = require('../meta/schemas');
+
+
+
+describe('JobFailError', function() {
+  it('should construct well with default arguments', done => {
+    const e = new JobFailError();
+    assert.strictEqual(e.previousError, void 0);
+    assert.strictEqual(e.message, '');
+
+    const e1 = new JobFailError('42');
+    assert.strictEqual(e1.previousError, '42');
+    assert.strictEqual(e1.message, '42');
+
+    const dummy = { foo: true, bar: 1.234 };
+    const e2 = new JobFailError(dummy);
+    assert.strictEqual(e2.previousError, dummy);
+    assert.strictEqual(e2.message, inspect(dummy));
+
+    done();
+  });
+});
+
+
+
+describe('CameleerJob', function() {
+  it('should throw if given invalid arguments', async() => {
+    const task = Task.fromConfiguration({
+      name: 't1',
+      enabled: true,
+      schedule: new ManualSchedule()
+    }, createDefaultCameleerConfig().defaults);
+
+    const rConfig = await task.resolveConfig();
+
+
+    assert.throws(() => {
+      new CameleerJob(null, null);
+    }, /The task given is not an instance of/i);
+
+    assert.throws(() => {
+      new CameleerJob(task, null);
+    }, /The resolvedConfig given is not an instance of/i);
+
+    assert.doesNotThrow(() => {
+      const j = new CameleerJob(task, rConfig);
+      assert.strictEqual(j.functionalTasksProgress, 0);
+    });
+  });
+
+  it('should always throw an error of type JobFailError', async() => {
+    const task = Task.fromConfiguration({
+      name: 't1',
+      enabled: true,
+      schedule: new ManualSchedule()
+    }, createDefaultCameleerConfig().defaults);
+
+    const rConfig = await task.resolveConfig();
+
+    assert.doesNotThrow(() => {
+      rConfig.tasks.join('');
+    });
+
+
+    // Now let's interfere with internals and simulate an Error where
+    // it never should happen.
+    Object.defineProperty(rConfig, 'tasks', {
+      get: () => { throw '42'; }
+    });
+
+    assert.throws(() => {
+      console.log(rConfig.tasks);
+    }, /42/);
+
+    await assertDoesNotThrowAsync(async() => {
+      let threw = false;
+      try {
+        await (new CameleerJob(task, rConfig)).run();
+      } catch (e) {
+        threw = true;
+        assert.isTrue(e instanceof JobFailError);
+        assert.strictEqual(e.previousError, '42');
+      } finally {
+        assert.isTrue(threw);
+      }
+    });
+  });
+});
 
 
 describe('Cameleer', function() {
@@ -34,6 +124,28 @@ describe('Cameleer', function() {
     await assertThrowsAsync(async() => {
       await c.loadTasks();
     });
+
+    await c.shutdown();
+  });
+
+  it('should be able to also load Task-instances', async() => {
+    const camConf = createDefaultCameleerConfig();
+    camConf.logging.method = 'none';
+    const std = new StandardConfigProvider(camConf, [Task.fromConfiguration({
+      name: 'foo',
+      enabled: true,
+      schedule: new ManualSchedule()
+    }, camConf.defaults)]);
+
+    const c = new Cameleer(std);
+    await c.loadTasks();
+
+    assert.strictEqual(c._tasksArr.length, 1);
+    assert.isTrue(c._tasks['foo'] instanceof Task);
+
+    // We should also be able to obtain an Observable by instance:
+    const obs = c.getObservableForWork(c._tasks['foo']);
+    assert.isTrue(obs instanceof Observable);
 
     await c.shutdown();
   });
@@ -163,7 +275,18 @@ describe('Cameleer', function() {
 
     assert.throws(() => {
       new Cameleer(new StandardConfigProvider(camConf));
-    }, /More than one default queue for type/i);
+    }, /More than one default queue for type 'cost'/i);
+
+
+    // Also check parallel queues:
+    camConf.queues[0].parallelism = 2;
+    camConf.queues[0].type = 'parallel';
+    camConf.queues[1].parallelism = 2;
+    camConf.queues[1].type = 'parallel';
+
+    assert.throws(() => {
+      new Cameleer(new StandardConfigProvider(camConf));
+    }, /More than one default queue for type 'parallel'/i);
   });
 
   it('should schedule a keep-alive until the next day', async function() {
