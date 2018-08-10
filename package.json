@@ -1,11 +1,13 @@
 {
   "name": "cameleer",
-  "version": "0.17.2",
+  "version": "1.0.0",
   "description": "Cameleer is a tool that facilitates rich orchestration and task definitions to get jobs done.",
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "test_ci": "nyc --reporter=html --reporter=text mocha"
+    "test_ci": "nyc --reporter=html --reporter=text mocha",
+    "posttest_ci": "npm run coverage",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
     "type": "git",
@@ -31,10 +33,11 @@
     "joi": "^13.5.2",
     "rxjs": "^6.2.2",
     "sh.log-client": "^2.6.3",
-    "sh.orchestration-tools": "^2.12.2"
+    "sh.orchestration-tools": "^2.14.1"
   },
   "devDependencies": {
     "chai": "^4.1.2",
+    "coveralls": "^3.0.2",
     "mocha": "^5.2.0",
     "nyc": "^12.0.2"
   }
