@@ -103,7 +103,8 @@ const ControlConfigSchema = ConfigurableClassConfigSchema.unknown(true);
 
 
 const CameleerDefaultsSchema = Joi.object().keys({
-  tasks: FunctionalTaskErrorConfigSchema
+  tasks: FunctionalTaskErrorConfigSchema,
+  handleGlobalRejections: Joi.boolean().default(true).optional()
 }).strict();
 
 const CameleerQueueConfigSchema = Joi.object().keys({

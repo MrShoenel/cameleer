@@ -90,6 +90,7 @@
  * @typedef CameleerDefaults
  * @type {Object}
  * @property {FunctionalTaskErrorConfig} tasks
+ * @property {boolean} [handleGlobalRejections] Optional. Defaults to true. If enabled, Cameleer will handle global Promise-rejections. This is useful as otherwise, badly implemented tasks can crash the entire process.
  */
 
 
