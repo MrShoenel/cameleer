@@ -32,7 +32,7 @@
     "felicity": "^2.4.9",
     "joi": "^13.6.0",
     "rxjs": "^6.2.2",
-    "sh.log-client": "^2.8.0",
+    "sh.log-client": "^2.8.1",
     "sh.orchestration-tools": "^2.15.0"
   },
   "devDependencies": {
