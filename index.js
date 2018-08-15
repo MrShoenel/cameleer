@@ -13,6 +13,7 @@ const { Cameleer, CameleerJob, CameleerQueue, CameleerWorkEvent, JobFailError,
 , { ConfigurableClass } = require('./tools/ConfigurableClass')
 , { RetryInterval } = require('./tools/RetryInterval')
 , { SubClassRegister } = require('./tools/SubClassRegister')
+, { createObservableValue } = require('./tools/CreateObservableValue')
 , {
   FunctionalTaskErrorConfigSchema,
   FunctionalTaskConfigSchema,
@@ -52,6 +53,7 @@ module.exports = Object.freeze({
   ConfigurableClass,
   RetryInterval,
   SubClassRegister,
+  createObservableValue,
   
   FunctionalTaskErrorConfigSchema,
   FunctionalTaskConfigSchema,
