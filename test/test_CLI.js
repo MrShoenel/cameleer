@@ -32,7 +32,8 @@ describe('CLI-example', function() {
     task.logger = new DevNullLogger(Task);
 
     const result = await task.config.tasks[0]({
-      task: task
+      logger: task.logger,
+      context: {}
     });
 
     assert.strictEqual(result, 42);

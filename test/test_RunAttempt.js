@@ -27,8 +27,6 @@ const createCamJob = async(taskConf, defaults) => {
   const resolvedConf = await taskInstance.resolveConfig();
 
   const cJob = new CameleerJob(taskInstance, resolvedConf);
-
-  cJob.task.logger = new DevNullLogger('foo');
   return cJob;
 };
 
