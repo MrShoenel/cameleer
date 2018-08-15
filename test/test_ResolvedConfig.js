@@ -23,8 +23,22 @@ describe('ResolvedConfig', () => {
       skip: () => false,
       cost: async() => 1.5,
       allowMultiple: () => Math.random() < .25,
-      queues: async() => ['q1'],
+      /** @param {ResolvedResolveObject} resolveObj */
+      queues: async(resolveObj) => {
+        assert.strictEqual(resolveObj.asd, 42);
+        assert.strictEqual(resolveObj.bla, 17);
+        assert.strictEqual(resolveObj.foo, true);
+        assert.strictEqual(resolveObj.baz, null);
+        assert.strictEqual(resolveObj.asd, 42);
+        return ['q1'];
+      },
       progress: new ProgressNumeric(0, 1),
+      resolve: {
+        asd: async() => { await timeout(50); return 42; },
+        bla: 17,
+        foo: new Promise((resolve, reject) => resolve(true)),
+        baz: () => null
+      },
       schedule: new Interval(100, () => Math.random(), 5, true, false, true),
       tasks: async() => [
         async() => { await timeout(10); return 41; },
@@ -48,7 +62,13 @@ describe('ResolvedConfig', () => {
     /** @type {TaskConfig} */
     const taskConf = {
       name: 'foo',
-      schedule: new ManualSchedule(),
+      resolve: {
+        dummy: async() => 42
+      },
+      schedule: rObj => {
+        assert.strictEqual(rObj.dummy, 42);
+        return new ManualSchedule();
+      },
       tasks: [
         {
           func: () => 42,
