@@ -101,6 +101,7 @@
  * @property {FunctionalTaskErrorConfig} tasks
  * @property {boolean} [handleGlobalRejections] Optional. Defaults to true. If enabled, Cameleer will handle global Promise-rejections. This is useful as otherwise, badly implemented tasks can crash the entire process.
  * @property {boolean} [handleGlobalErrors] Optional. Defaults to true. If enabled, Cameleer will handle uncaught Errors. This is useful as otherwise, badly implemented tasks can crash the entire process.
+ * @property {number} [staticTaskContextSerializeInterval] Optional. Defaults to 60'000 (one minute). This property is in milliseconds. Determines the de-bounced interval for serializing the file for all tasks' static context. This file will always be written when Cameleer shuts down, but periodic serializing is recommended. Set this to a negative value to disable periodic writeouts.
  */
 
 
@@ -163,4 +164,9 @@
 /**
  * @typedef ControlConfig
  * @type {ConfigurableClassConfig}
+ */
+
+/**
+ * @typedef StaticTaskContext
+ * @type {Object.<string, Object.<string, any>>}
  */

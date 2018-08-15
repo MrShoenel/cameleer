@@ -1,6 +1,9 @@
 .vs
 .vscode
 
+# Cameleer-created files
+staticTaskContext.json
+
 # Logs
 logs
 *.log
