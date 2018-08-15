@@ -2,10 +2,12 @@ require('../meta/typedefs');
 
 const { Task } = require('../lib/cameleer/Task')
 , { Interval, timeout } = require('sh.orchestration-tools')
-, { DefaultCameleerConfig, StandardConfigProvider } = require('../lib/cameleer/ConfigProvider');
+, { createDefaultCameleerConfig, StandardConfigProvider } = require('../lib/cameleer/ConfigProvider')
+, { LogLevel } = require('sh.log-client');
 
 
-
+const cameleerConfig = createDefaultCameleerConfig();
+cameleerConfig.logging.level = LogLevel.Information;
 
 
 /**
@@ -27,12 +29,19 @@ const exampleTasks = [Task.fromConfiguration({
      * @param {CameleerJob} job
      */
     async job => {
-      job.task.logger.logInfo('Running the functional task.');
+      job.logger.logInfo('Running the functional task.');
       await timeout(500);
-      return 42;
+      return job.context.value = 42;
+    },
+    {
+      name: 'Ftask 2',
+      func: async job => {
+        await timeout(50);
+        return job.context.value += 1;
+      }
     }
   ]
-}, DefaultCameleerConfig.defaults)];
+}, cameleerConfig.defaults)];
 
 
 
@@ -43,4 +52,4 @@ const exampleTasks = [Task.fromConfiguration({
  * your custom ConfigProvider or an (async) function that will return it eventually.
  */
 
-module.exports = new StandardConfigProvider({}, exampleTasks);
+module.exports = new StandardConfigProvider(cameleerConfig, exampleTasks);
