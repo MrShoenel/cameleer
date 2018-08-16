@@ -19,7 +19,9 @@ const { assert, expect } = require('chai')
 } = require('../lib/cameleer/ConfigProvider')
 , { Control } = require('../lib/control/Control')
 , { Manager } = require('../lib/manager/Manager')
-, { CameleerConfigSchema } = require('../meta/schemas');
+, { CameleerConfigSchema } = require('../meta/schemas')
+, fs = require('fs')
+, fsProm = fs.promises;
 
 
 
@@ -354,5 +356,61 @@ describe('Cameleer', function() {
     assert.strictEqual(c.inMemoryLogger.numMessages, 1);
 
     await c.shutdown();
+  });
+
+  it('should allow accessing and storing static context', async() => {
+    let numExec = 0;
+
+    const sched = new ManualSchedule();
+    const camConf = createDefaultCameleerConfig();
+    camConf.logging.method = 'none';
+    camConf.logging.numInMemory = 0;
+    const std = new StandardConfigProvider(camConf, [{
+      name: 'FooTask',
+      /** @param {Task} task */
+      skip: async(rro, task) => {
+        assert.isTrue(task instanceof Task);
+        assert.isTrue(!!task.staticContext);
+
+        if (numExec === 0) {
+          assert.isFalse('foo' in task.staticContext);
+          task.staticContext['foo'] = 42;
+        } else if (numExec === 1) {
+          assert.isTrue('foo' in task.staticContext);
+          assert.strictEqual(task.staticContext.foo, 42);
+        } else {
+          throw new Error('Should not happen!');
+        }
+
+        numExec++;
+        return true;
+      },
+      schedule: sched
+    }]);
+
+
+    const c1 = new Cameleer(std);
+    if (fs.existsSync(c1._staticTaskContextFile)) {
+      await fsProm.unlink(c1._staticTaskContextFile);
+    }
+    let runProm = c1.runAsync();
+    await c1.loadTasks();
+    sched.triggerNext();
+    await timeout(100);
+    await Promise.all([ runProm, c1.shutdown() ]);
+
+    assert.strictEqual(numExec, 1);
+
+
+    // Now run another cameleer instance
+    const c2 = new Cameleer(std);
+    assert.isTrue(fs.existsSync(c2._staticTaskContextFile));
+    runProm = c2.runAsync();
+    await c2.loadTasks();
+    sched.triggerNext();
+    await timeout(100);
+    await Promise.all([ runProm, c2.shutdown() ]);
+
+    assert.strictEqual(numExec, 2);
   });
 });
