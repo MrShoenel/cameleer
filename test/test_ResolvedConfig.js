@@ -24,7 +24,10 @@ describe('ResolvedConfig', () => {
       cost: async() => 1.5,
       allowMultiple: () => Math.random() < .25,
       /** @param {ResolvedResolveObject} resolveObj */
-      queues: async(resolveObj) => {
+      queues: async function(resolveObj, task) {
+        assert.strictEqual(arguments.length, 2);
+        assert.strictEqual(task, void 0);
+
         assert.strictEqual(resolveObj.asd, 42);
         assert.strictEqual(resolveObj.bla, 17);
         assert.strictEqual(resolveObj.foo, true);

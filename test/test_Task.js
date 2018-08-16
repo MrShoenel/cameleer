@@ -118,9 +118,14 @@ describe('Task', () => {
     done();
   });
 
-  it('should not allow changing the logger, once set', done => {
+  it('should not allow changing the logger, once set', async() => {
     /** @type {TaskConfig} */
     const exampleTask = getExampleTask();
+
+    exampleTask.queues = async function(resolvedObj, task) {
+      assert.isTrue(task instanceof Task);
+      return [];
+    };
 
     exampleTask.enabled = true;
     exampleTask.tasks.splice(1, 1);
@@ -141,7 +146,7 @@ describe('Task', () => {
       t.logger = l;
     });
 
-    done();
+    const rc = await t.resolveConfig();
   });
 
   it('should allow instantiation of subclasses that have their own extended config', done => {
