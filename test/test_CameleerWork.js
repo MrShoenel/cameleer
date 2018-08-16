@@ -95,7 +95,7 @@ describe('CameleerWork', function() {
       });
 
       // The following should NOT throw:
-      c.clearTasks();
+      await c.clearTasks();
       await c.loadTasks();
       return await c.shutdown();
     })();
