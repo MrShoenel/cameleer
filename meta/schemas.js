@@ -52,13 +52,13 @@ const TaskConfigSchema = Joi.object().keys({
   name: Joi.string().min(1).max(255).required(),
   enabled: Joi.alternatives(
     Joi.bool(),
-    Joi.func().arity(0)
+    Joi.func().maxArity(2)
   ).default(true).optional(), // We require a resolved property!
-  skip: Joi.func().arity(0)
+  skip: Joi.func().maxArity(2)
     .default(false).optional(),
   cost: Joi.alternatives(
     Joi.number().greater(0),
-    Joi.func().arity(0)
+    Joi.func().maxArity(2)
   ).default(null).optional(),
   allowMutliple: Joi.alternatives(
     Joi.boolean(),
@@ -68,7 +68,7 @@ const TaskConfigSchema = Joi.object().keys({
     Joi.array().items(
       Joi.string().min(1)
     ).required().not().empty(),
-    Joi.func().arity(0).required()
+    Joi.func().maxArity(2).required()
   ).optional(),
   progress: Joi.alternatives(
     Joi.object(),
