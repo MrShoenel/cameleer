@@ -127,6 +127,7 @@ describe('Cameleer', function() {
     //   throw new Error();
     // }, 50);
     cameleer._handleUncaughtErrors(new Error('42'));
+    cameleer._handleUncaughtErrors({ foo: 42 });
 
     await timeout(150);
 
@@ -248,6 +249,9 @@ describe('Cameleer', function() {
 
     delete camConf.controls;
     delete camConf.managers;
+    delete camConf.defaults.handleGlobalErrors;
+    delete camConf.defaults.handleGlobalRejections;
+    delete camConf.defaults.staticTaskContextSerializeInterval;
 
     class NonChangingConfProv extends StandardConfigProvider {
       constructor(cam, tasks) {
@@ -412,5 +416,20 @@ describe('Cameleer', function() {
     await Promise.all([ runProm, c2.shutdown() ]);
 
     assert.strictEqual(numExec, 2);
+
+
+    // Let's check how it looks if the static context cannot be written..
+    const c3 = new Cameleer(std);
+    runProm = c3.runAsync();
+    await c3.loadTasks();
+    const fileBefore = c3._staticTaskContextFile;
+    c3._staticTaskContextFile = '/invalid:///file.ser';
+
+    await assertThrowsAsync(async() => {
+      await c3._saveStaticTaskContext();
+    });
+    c3._staticTaskContextFile = fileBefore; // Otherwise, shutdown() throws
+
+    await Promise.all([ runProm, c3.shutdown() ]);
   });
 });
