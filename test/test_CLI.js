@@ -31,11 +31,19 @@ describe('CLI-example', function() {
     const task = await confInstance.getTaskConfig('myTask');
     task.logger = new DevNullLogger(Task);
 
-    const result = await task.config.tasks[0]({
+    const ctx = {};
+    let result = await task.config.tasks[0]({
       logger: task.logger,
-      context: {}
+      context: ctx
     });
-
     assert.strictEqual(result, 42);
+    assert.strictEqual(ctx.value, 42);
+
+    result = await task.config.tasks[1].func({
+      logger: task.logger,
+      context: ctx
+    });
+    assert.strictEqual(result, 43);
+    assert.strictEqual(ctx.value, 43);
   });
 });

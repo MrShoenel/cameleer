@@ -127,6 +127,7 @@ describe('Cameleer', function() {
     //   throw new Error();
     // }, 50);
     cameleer._handleUncaughtErrors(new Error('42'));
+    cameleer._handleUncaughtErrors({ foo: 42 });
 
     await timeout(150);
 
@@ -248,6 +249,9 @@ describe('Cameleer', function() {
 
     delete camConf.controls;
     delete camConf.managers;
+    delete camConf.defaults.handleGlobalErrors;
+    delete camConf.defaults.handleGlobalRejections;
+    delete camConf.defaults.staticTaskContextSerializeInterval;
 
     class NonChangingConfProv extends StandardConfigProvider {
       constructor(cam, tasks) {
