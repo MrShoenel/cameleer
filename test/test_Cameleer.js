@@ -412,5 +412,20 @@ describe('Cameleer', function() {
     await Promise.all([ runProm, c2.shutdown() ]);
 
     assert.strictEqual(numExec, 2);
+
+
+    // Let's check how it looks if the static context cannot be written..
+    const c3 = new Cameleer(std);
+    runProm = c3.runAsync();
+    await c3.loadTasks();
+    const fileBefore = c3._staticTaskContextFile;
+    c3._staticTaskContextFile = '/invalid:///file.ser';
+
+    await assertThrowsAsync(async() => {
+      await c3._saveStaticTaskContext();
+    });
+    c3._staticTaskContextFile = fileBefore; // Otherwise, shutdown() throws
+
+    await Promise.all([ runProm, c3.shutdown() ]);
   });
 });
