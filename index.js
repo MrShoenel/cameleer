@@ -1,5 +1,5 @@
 const { Cameleer, CameleerJob, CameleerQueue, CameleerWorkEvent, JobFailError,
-  symbolCameleerSchedule, symbolCameleerShutdown, symbolCameleerWork
+  symbolCameleerSchedule, symbolCameleerInterruptable, symbolCameleerShutdown, symbolCameleerWork
 } = require('./lib/cameleer/Cameleer')
 , { ConfigProvider, createDefaultCameleerConfig, DefaultCameleerConfig, StandardConfigProvider } = require('./lib/cameleer/ConfigProvider')
 , { ResolvedConfig } = require('./lib/cameleer/ResolvedConfig')
@@ -40,7 +40,7 @@ const { Cameleer, CameleerJob, CameleerQueue, CameleerWorkEvent, JobFailError,
 
 module.exports = Object.freeze({
   Cameleer, CameleerJob, CameleerQueue, CameleerWorkEvent, JobFailError,
-  symbolCameleerSchedule, symbolCameleerShutdown, symbolCameleerWork,
+  symbolCameleerSchedule, symbolCameleerInterruptable, symbolCameleerShutdown, symbolCameleerWork,
   ConfigProvider, createDefaultCameleerConfig, DefaultCameleerConfig, StandardConfigProvider,
   ResolvedConfig,
   ErrorResult, Result,
