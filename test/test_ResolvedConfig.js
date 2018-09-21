@@ -43,6 +43,7 @@ describe('ResolvedConfig', () => {
         baz: () => null
       },
       schedule: new Interval(100, () => Math.random(), 5, true, false, true),
+      interruptTimeoutSecs: async() => 500,
       tasks: async() => [
         async() => { await timeout(10); return 41; },
         _41 => _41 + 1
@@ -58,6 +59,7 @@ describe('ResolvedConfig', () => {
     assert.strictEqual(resolved.progress, taskConf.progress);
     assert.strictEqual(resolved.schedule, taskConf.schedule);
     assert.isTrue(resolved.tasks.length === 2);
+    assert.strictEqual(resolved.interruptTimeoutSecs, 500);
     assert.strictEqual(resolved.tasks[1].func(await resolved.tasks[0].func()), 42);
   });
 

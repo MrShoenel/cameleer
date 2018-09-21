@@ -4,7 +4,7 @@ const { assert, expect } = require('chai')
 , { assertThrowsAsync, mergeObjects, Interval } = require('sh.orchestration-tools')
 , { Task } = require('../lib/cameleer/Task')
 , { Cameleer, CameleerJob, symbolCameleerShutdown,
-    symbolCameleerSchedule, symbolCameleerWork } = require('../lib/cameleer/Cameleer')
+    symbolCameleerSchedule, symbolCameleerWork, symbolCameleerInterruptable } = require('../lib/cameleer/Cameleer')
 , { ProgressNumeric, timeout, ManualSchedule,
     symbolDone, symbolRun, symbolFailed } = require('sh.orchestration-tools')
 , { LogLevel } = require('sh.log-client')
@@ -227,11 +227,16 @@ describe('CameleerWork', function() {
     await c1.loadTasks();
 
     let scheduleObserved = false;
+    let interruptableObserverd = false;
     let numWorkObserved = 0;
     c1.getObservableForWork(testTaskCopy.name).subscribe(camWorkEvt => {
       if (camWorkEvt.type === symbolCameleerSchedule) {
         scheduleObserved = true;
         return; // that will happen, but the task should not execute
+      }
+      if (camWorkEvt.type === symbolCameleerInterruptable) {
+        interruptableObserverd = true;
+        return; // This should also happen
       }
       numWorkObserved++; // This should never happen as there are no queues
     });
@@ -243,6 +248,7 @@ describe('CameleerWork', function() {
     await runObs;
 
     assert.isTrue(scheduleObserved);
+    assert.isTrue(interruptableObserverd);
     assert.strictEqual(numWorkObserved, 0);
 
     return await c1.shutdown();
@@ -507,6 +513,54 @@ describe('CameleerWork', function() {
     await timeout(50);
     assert.isTrue(cameleer._isTaskRunning(cameleer._tasks['t1']));
     assert.isTrue(cameleer._isTaskEnqueued(cameleer._tasks['t1']));
+
+    await cameleer.shutdown();
+    await runPromise;
+  });
+
+  it('should support interruptable tasks (and those that are not)', async() => {
+    const conf = createDefaultCameleerConfig();
+    conf.logging.method = 'none';
+    const m1 = new ManualSchedule();
+    const t1 = getExampleTask('t1');
+    t1.interruptTimeoutSecs = 30;
+    t1.schedule = m1;
+    t1.tasks = [{
+      func: async() => await timeout(150)
+    }];
+
+    const config = new StandardConfigProvider(conf, [ t1 ]);
+    const cameleer = new Cameleer(config);
+
+    await cameleer.loadTasks();
+
+    let scheduleObserved = false;
+    let interruptableObserverd = false;
+
+    cameleer.observableWork.subscribe(camWorkEvt => {
+      if (camWorkEvt.type === symbolCameleerSchedule) {
+        scheduleObserved = true;
+        return;
+      }
+      if (camWorkEvt.type === symbolCameleerInterruptable) {
+        cameleer.interruptJob(camWorkEvt.job);
+        interruptableObserverd = true;
+        return;
+      }
+
+      throw new Error(); // we shall not get here..
+    });
+
+    const runPromise = cameleer.runAsync();
+    
+    m1.triggerNext();
+
+    await timeout(50);
+    assert.isTrue(scheduleObserved);
+    assert.isTrue(interruptableObserverd);
+
+    const q = cameleer._queuesArr[0].queue;
+    assert.isTrue(q.workDone === 0 && q.workFailed === 0);
 
     await cameleer.shutdown();
     await runPromise;
