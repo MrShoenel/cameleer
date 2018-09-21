@@ -76,7 +76,7 @@ const TaskConfigSchema = Joi.object().keys({
   ).default(null).optional(),
   schedule: Joi.object()/*.type(Schedule)*/.required(), // We require a resolved property!
   interruptTimeoutSecs: Joi.alternatives(
-    Joi.number().greater(0),
+    Joi.number().integer().greater(0),
     Joi.func().maxArity(2)
   ).default(null).optional(),
   tasks: Joi.alternatives(
