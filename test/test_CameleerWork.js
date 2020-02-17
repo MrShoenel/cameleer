@@ -117,7 +117,7 @@ describe('CameleerWork', function() {
     // after this, the first task should be within its 2nd functional task
 
     /** @type {CameleerJob} */
-    const cJob = c._queues.defaultQueue.queue.currentJobs[0];
+    const cJob = c._queues.defaultQueue.queue.currentJobs.asArray[0];
 
     assert.strictEqual(cJob.results.length, 1);
     assert.strictEqual(cJob.results[0].value, 41);
